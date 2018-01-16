@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from os import environ
 from datetime import datetime
 
 
@@ -43,6 +44,11 @@ class TestSuiteData(object):
 
 
 test_suite_data = TestSuiteData()
+
+sauce_username = environ.get('SAUCE_USERNAME')
+sauce_access_key = environ.get('SAUCE_ACCESS_KEY')
+bit_bar_api_key = environ.get('BIT_BAR_API_KEY')
+
 
 
 basic_user = dict()

@@ -25,3 +25,4 @@ yarl==0.12.0
 zbarlight==1.2
 eth-utils==0.7.4
 ethereum==2.3.0
+matplotlib==2.1.1

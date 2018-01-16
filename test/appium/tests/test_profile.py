@@ -1,12 +1,12 @@
 import pytest
 import time
-from tests.base_test_case import SingleDeviceTestCase
+from tests.base_test_case import SingleDeviceTestCase, BitBarTestCase
 from tests import basic_user
 from views.sign_in_view import SignInView
 
 
 @pytest.mark.all
-class TestProfileView(SingleDeviceTestCase):
+class TestProfileView(BitBarTestCase):
 
     def test_qr_code_and_its_value(self):
         sign_in_view = SignInView(self.driver)

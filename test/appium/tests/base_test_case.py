@@ -2,14 +2,17 @@ import pytest
 import sys
 import re
 import subprocess
+import time
 import asyncio
 
+from tests import bit_bar_api_key
 from os import environ
 from appium import webdriver
 from abc import ABCMeta, abstractmethod
 from selenium.common.exceptions import WebDriverException
 from tests import test_suite_data, start_threads
 from views.base_view import BaseView
+from api_bindings.bitbar import BitBar
 
 
 class AbstractTestCase:
@@ -184,7 +187,91 @@ class SauceMultipleDeviceTestCase(AbstractTestCase):
         cls.loop.close()
 
 
-environments = {'local': LocalMultipleDeviceTestCase,
+class BitBarTestCase(AbstractTestCase):
+
+    def get_performance_diff(self, previous_build=None):
+
+        # imports are necessary on this level for selecting 'Agg'
+
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
+        bit_bar = BitBar(bit_bar_api_key)
+        data = dict()
+        for name in test_suite_data.apk_name, previous_build:
+            data[name] = dict()
+            data[name]['seconds'] = list()
+            data[name]['CPU'] = list()
+            data[name]['RAM'] = list()
+            try:
+                build_data = bit_bar.get_performance_by(name, test_suite_data.current_test.name)
+            except BitBar.NameNotFoundException:
+                build_data = None
+            if build_data:
+                for second, nothing in enumerate(build_data):
+                    data[name]['seconds'].append(second)
+                    data[name]['CPU'].append(nothing['cpuUsage'] * 100)
+                    data[name]['RAM'].append(float(nothing['memUsage']) / 1000000)
+        plt.style.use('dark_background')
+        for i in 'CPU', 'RAM':
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(15, 5))
+            ax.plot(data[test_suite_data.apk_name]['seconds'],
+                    data[test_suite_data.apk_name][i], 'o-', color='#40e0d0', label=test_suite_data.apk_name)
+            if data[previous_build]:
+                ax.plot(data[previous_build]['seconds'],
+                        data[previous_build][i], 'o-', color='#ffa500', label=previous_build)
+            plt.title('diff(%s): ' % i + test_suite_data.current_test.name)
+            plt.legend()
+            fig.savefig('%s_' % i + test_suite_data.current_test.name + '.png')
+
+    @property
+    def capabilities_bitbar(self):
+        capabilities = dict()
+        capabilities['testdroid_apiKey'] = bit_bar_api_key
+        capabilities['testdroid_target'] = 'android'
+        capabilities['testdroid_device'] = 'LG Google Nexus 5X 6.0.1'
+        capabilities['testdroid_app'] = pytest.config.getoption('apk')
+        capabilities['testdroid_project'] = test_suite_data.apk_name
+        capabilities['testdroid_testrun'] = test_suite_data.current_test.name
+        capabilities['testdroid_gamebench'] = True
+        capabilities['testdroid_findDevice'] = True
+        capabilities['testdroid_testTimeout'] = 600
+
+        capabilities['platformName'] = 'Android'
+        capabilities['deviceName'] = 'Android Phone'
+        capabilities['automationName'] = 'Appium'
+        capabilities['newCommandTimeout'] = 600
+        capabilities['autoDismissAlerts'] = False
+        return capabilities
+
+    @property
+    def executor_bitbar(self):
+        return 'http://appium.testdroid.com/wd/hub'
+
+    def setup_method(self, method):
+        self.driver = webdriver.Remote(self.executor_bitbar,
+                                       self.capabilities_bitbar)
+        self.driver.implicitly_wait(self.implicitly_wait)
+        BaseView(self.driver).accept_agreements()
+        test_suite_data.current_test.jobs.append(self.driver.session_id)
+
+    def teardown_method(self, method):
+        try:
+            self.driver.quit()
+        except WebDriverException:
+            pass
+        finally:
+            for i in range(4):
+                try:
+                    self.get_performance_diff(BitBar(bit_bar_api_key).get_previous_project_name())
+                    return
+                except BitBar.ResponseError:
+                    time.sleep(30)
+
+
+environments = {'bitbar': BitBarTestCase,
+                'local': LocalMultipleDeviceTestCase,
                 'sauce': SauceMultipleDeviceTestCase}
 
 
