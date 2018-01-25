@@ -16,7 +16,6 @@
             [status-im.protocol.web3.inbox :as inbox]
             [status-im.protocol.web3.keys :as web3.keys]
             [status-im.utils.datetime :as datetime]
-            [status-im.utils.events-buffer :as events-buffer]
             [taoensso.timbre :as log :refer-macros [debug]]
             [status-im.native-module.core :as status]
             [clojure.string :as string]
@@ -85,7 +84,7 @@
      {:web3                        web3
       :identity                    public-key
       :groups                      groups
-      :callback                    #(events-buffer/dispatch [:incoming-message %1 %2])
+      :callback                    #(re-frame/dispatch [:incoming-message %1 %2])
       :ack-not-received-s-interval 125
       :default-ttl                 120
       :send-online-s-interval      180
@@ -242,30 +241,26 @@
                      #(re-frame/dispatch [::get-sym-key-error %]))))
 
 (re-frame/reg-fx
- ::request-messages
- (fn [{:keys [wnode topic sym-key-id web3]}]
-   (inbox/request-messages web3
-                           wnode
-                           topic
-                           sym-key-id
-                           #(re-frame/dispatch [::request-messages-success %])
-                           #(re-frame/dispatch [::request-messages-error %]))))
-
-(re-frame/reg-fx
- ::handle-whisper-message
- listeners/handle-whisper-message)
+  ::request-messages
+  (fn [{:keys [wnode topic sym-key-id web3]}]
+    (inbox/request-messages web3
+                            wnode
+                            topic
+                            sym-key-id
+                            #(re-frame/dispatch [::request-messages-success %])
+                            #(re-frame/dispatch [::request-messages-error %]))))
 
 ;;;; Handlers
 
 ;; NOTE(dmitryn): events chain
 ;; add-peeer -> mark-trusted-peer -> get-sym-key -> request-messages
 (handlers/register-handler-fx
- :initialize-offline-inbox
- (fn [{:keys [db]} [_ web3]]
-   (log/info "offline inbox: initialize")
-   (let [wnode (get-in db [:inbox/wnode :address])]
-     {::add-peer {:wnode wnode
-                  :web3  web3}})))
+  :initialize-offline-inbox
+  (fn [{:keys [db]} [_ web3]]
+    (log/info "offline inbox: initialize")
+    (let [wnode (get-in db [:inbox/wnode :address])]
+      {::add-peer {:wnode wnode
+                   :web3  web3}})))
 
 (handlers/register-handler-fx
  ::add-peer-success
@@ -318,16 +313,9 @@
    (log/error "offline inbox: get-sym-key error" error)))
 
 (handlers/register-handler-fx
- ::request-messages-error
- (fn [_ [_ error]]
-   (log/error "offline inbox: request-messages error" error)))
-
-(handlers/register-handler-fx
- :handle-whisper-message
- (fn [_ [_ error msg options]]
-   {::handle-whisper-message {:error error
-                              :msg msg
-                              :options options}}))
+  ::request-messages-error
+  (fn [_ [_ error]]
+    (log/error "offline inbox: request-messages error" error)))
 
 ;;; INITIALIZE PROTOCOL
 (handlers/register-handler-fx
@@ -346,7 +334,7 @@
                          :updates-public-key updates-public-key :updates-private-key updates-private-key
                          :status status :contacts contacts}
          :db (assoc db :web3 web3
-                       :rpc-url (or ethereum-rpc-url constants/ethereum-rpc-url))}))))
+                    :rpc-url (or ethereum-rpc-url constants/ethereum-rpc-url))}))))
 
 (handlers/register-handler-fx
   :load-processed-messages
@@ -407,7 +395,7 @@
   (or ack-of-message message-id))
 
 (handlers/register-handler-fx
-  :incoming-message 
+  :incoming-message
   (fn [{:keys [db]} [_ type {:keys [payload ttl id] :as message}]]
     (let [message-id (or id (:message-id payload))]
       (when-not (cache/exists? message-id type)
@@ -441,13 +429,13 @@
                          :discoveries-response   {:dispatch [:discoveries-response-received message]}
                          :profile                {:dispatch [:contact-update-received message]}
                          :update-keys            {:dispatch [:update-keys-received message]}
-                         :online                 {:dispatch [:contact-online-received message]} 
+                         :online                 {:dispatch [:contact-online-received message]}
                          nil)]
           (when (nil? route-fx) (debug "Unknown message type" type))
           (cache/add! processed-message)
           (merge
-            {::save-processed-messages processed-message}
-            route-fx))))))
+           {::save-processed-messages processed-message}
+           route-fx))))))
 
 (handlers/register-handler-fx
   :update-message-status
@@ -455,16 +443,16 @@
   (fn [{:keys [db get-stored-message]} [{:keys [from sent-from payload]} status]]
     (let [message-identifier (get-message-id payload)
           chat-identifier    (or (:group-id payload) from)
-          message-db-path    [:chats chat-identifier :messages message-identifier] 
-          from-id            (or sent-from from) 
+          message-db-path    [:chats chat-identifier :messages message-identifier]
+          from-id            (or sent-from from)
           message            (get-stored-message message-identifier)]
-      ;; proceed with updating status if chat is in db, status is not the same and message was not already seen 
+      ;; proceed with updating status if chat is in db, status is not the same and message was not already seen
       (when (and (get-in db [:chats chat-identifier])
                  (not= status (get-in message [:user-statuses from-id]))
                  (not (chat.utils/message-seen-by? message from-id)))
         (let [statuses (assoc (:user-statuses message) from-id status)]
           (cond-> {:update-message {:message-id    message-identifier
-                                    :user-statuses statuses}} 
+                                    :user-statuses statuses}}
             (get-in db message-db-path)
             (assoc :db (assoc-in db (conj message-db-path :user-statuses) statuses))))))))
 
@@ -501,7 +489,7 @@
           (when-not (:pending? existing-contact)
             (cond-> {:dispatch-n [[:update-chat! chat]
                                   [:watch-contact contact]]}
-                (<= prev-last-updated timestamp') (update :dispatch-n concat [[:update-contact! contact]]))))))))
+              (<= prev-last-updated timestamp') (update :dispatch-n concat [[:update-contact! contact]]))))))))
 
 ;;GROUP
 

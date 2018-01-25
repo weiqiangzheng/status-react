@@ -1,10 +1,9 @@
 (ns status-im.data-store.contacts
-  (:require [status-im.data-store.realm.contacts :as data-store])
+  (:require [re-frame.core :as re-frame]
+            [status-im.data-store.realm.contacts :as data-store])
   (:refer-clojure :exclude [exists?]))
 
-(defn get-all
-  []
-  (data-store/get-all-as-list))
+
 
 (defn get-by-id
   [whisper-identity]
@@ -31,3 +30,12 @@
 (defn exists?
   [whisper-identity]
   (data-store/exists? whisper-identity))
+
+(defn get-all
+  []
+  (data-store/get-all-as-list))
+
+(re-frame/reg-cofx
+  :data-store/contacts
+  (fn [cofx _]
+    (assoc cofx :data-store/contacts (get-all))))

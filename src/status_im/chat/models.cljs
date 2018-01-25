@@ -31,22 +31,20 @@
    (let [new-chat       (create-new-chat cofx chat-id chat-props)
          existing-chats (:chats db)]
      {:db        (cond-> db
-                         (not (contains? existing-chats chat-id))
-                         (update :chats assoc chat-id new-chat))
-      :save-chat new-chat})))
+                   (not (contains? existing-chats chat-id))
+                   (update :chats assoc chat-id new-chat))})))
 
 ;; TODO (yenda): there should be an option to update the timestamp
 ;; this shouldn't need a specific function like `upsert-chat` which
 ;; is wrongfuly named
 (defn update-chat
   "Updates chat properties, if chat is not present in db, creates a default new one"
-  [{:keys [db get-stored-chat] :as cofx} {:keys [chat-id] :as chat}]
-  (let [chat (merge (or (get-stored-chat chat-id)
+  [{:keys [db] :as cofx} {:keys [chat-id] :as chat}]
+  (let [chat (merge (or (get-in db [:chats chat-id])
                         (create-new-chat cofx chat-id {}))
                     chat)]
     {:db        (cond-> db
-                  (:is-active chat) (update-in [:chats chat-id] merge chat))
-     :save-chat chat}))
+                  (:is-active chat) (update-in [:chats chat-id] merge chat))}))
 
 ;; TODO (yenda): an upsert is suppose to add the entry if it doesn't
 ;; exist and update it if it does
