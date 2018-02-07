@@ -335,18 +335,18 @@
                                                       [:pending-message-remove message])
                             :seen                   [:update-message-status message :seen]
                             :group-invitation       [:group-chat-invite-received message]
-                            :update-group           [:update-group-message message]
-                            :add-group-identity     [:participant-invited-to-group message]
-                            :remove-group-identity  [:participant-removed-from-group message]
-                            :leave-group            [:participant-left-group message]
+                            ;:update-group           [:update-group-message message]
+                            ;:add-group-identity     [:participant-invited-to-group message]
+                            ;:remove-group-identity  [:participant-removed-from-group message]
+                            ;:leave-group            [:participant-left-group message]
                             :contact-request        [:contact-request-received message]
-                            :discover               [:status-received message]
-                            :discoveries-request    [:discoveries-request-received message]
-                            :discoveries-response   [:discoveries-response-received message]
+                            ;:discover               [:status-received message]
+                            ;:discoveries-request    [:discoveries-request-received message]
+                            ;:discoveries-response   [:discoveries-response-received message]
                             :profile                [:contact-update-received message]
                             :update-keys            [:update-keys-received message]
-                            :online                 [:contact-online-received message]
-                            :pending                [:pending-message-upsert message]
+                            ;:online                 [:contact-online-received message]
+                            ;:pending                [:pending-message-upsert message]
                             :sent                   (let [{:keys [to id group-id]} message
                                                           message' {:from    to
                                                                     :payload {:message-id id

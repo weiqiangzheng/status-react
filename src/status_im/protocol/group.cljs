@@ -137,7 +137,7 @@
     (fn [key-id]
       (f/add-filter!
         web3
-        (if true
+        (if false
           {:topics   [f/status-topic]
            :key      key-id
            :allowP2P true

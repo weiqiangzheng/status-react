@@ -4,7 +4,7 @@
 
 (def accounts-container
   {:flex             1
-   :background-color common/color-blue2})
+   :background-color common/color-blue4})
 
 (def bottom-actions-container
   {:margin-bottom 16})

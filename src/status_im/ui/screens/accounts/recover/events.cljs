@@ -33,11 +33,12 @@
     (let [data       (json->clj result)
           public-key (:pubkey data)
           address    (-> data :address utils.hex/normalize-hex)
+          name       (get-in db [:accounts/create :name])
           phrase     (signing-phrase/generate)
           {:keys [public private]} keypair
           account {:public-key          public-key
                    :address             address
-                   :name                (generate-gfy public-key)
+                   :name                (or name (generate-gfy public-key))
                    :photo-path          (identicon public-key)
                    :updates-public-key  public
                    :updates-private-key private
