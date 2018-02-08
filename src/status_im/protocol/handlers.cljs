@@ -452,7 +452,7 @@
   :incoming-message
   (fn [{:keys [db]} [_ type {:keys [payload ttl id] :as message}]]
     (if (= type :system/ping)
-      (send-ping (:web3 db) (:current-public-key db) (:current-public-key db) (:payload message))
+      (send-ping (:web3 db) (:current-public-key db) (:current-public-key db) payload)
       (let [message-id (or id (:message-id payload))]
         (when-not (cache/exists? message-id type)
           (let [ttl-s             (* 1000 (or ttl 120))

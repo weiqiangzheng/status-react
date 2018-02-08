@@ -42,9 +42,9 @@
            (cond-> {:sig     from
                     :topic   (first topics)
                     :payload payload'}
-                   to (assoc :pubKey to)
-                   (not to) (assoc :symKeyID status-key-id
-                                   :sym-key-password sym-key-password)))))))))
+             to (assoc :pubKey to)
+             (not to) (assoc :symKeyID status-key-id
+                             :sym-key-password sym-key-password)))))))))
 
 (s/def :shh/pending-message
   (s/keys :req-un [:message/sig :shh/payload :message/topic]
@@ -58,11 +58,11 @@
 
 (async/go-loop [[web3 {:keys [type message-id requires-ack? to ack?] :as message}]
                 (async/<! pending-message-queue)]
+  (log/debug :process-message)
   (when message
     (prepare-message
      web3 message
      (fn [message']
-       (println message')
        (when (valid? :shh/pending-message message')
          (let [group-id        (get-in message [:payload :group-id])
                pending-message {:id            message-id
@@ -213,6 +213,10 @@
   [message message-type ttl-config default-ttl]
   (update message :ttl #(or % ((keyword message-type) ttl-config) default-ttl)))
 
+
+(defn reset-all-pending-messages! []
+  (reset! messages {}))
+
 (defn message-pending?
   [web3 required-type required-to]
   (some (fn [[_ messages]]
@@ -241,15 +245,20 @@
       (doseq [[_ messages] (@messages web3)]
         (doseq [[_ {:keys [id message to type] :as data}] messages]
           ;; check each message asynchronously
-          (when (should-be-retransmitted? options data)
-            (try
-              (let [message' (check-ttl message type ttl-config default-ttl)
-                    callback (delivery-callback web3 post-error-callback data message')]
-                (t/post-message! web3 message' callback))
-              (catch :default err
-                (log/error :post-message-error err))
-              (finally
-                (attempt-was-made! web3 id to))))))
+          (if (= type :system/ping)
+            (let [message' (check-ttl message type ttl-config default-ttl)
+                  callback #(log/debug :message-delivered)]
+              (reset-all-pending-messages!)
+              (t/post-ping! web3 message' callback))
+            (when (should-be-retransmitted? options data)
+              (try
+                (let [message' (check-ttl message type ttl-config default-ttl)
+                      callback (delivery-callback web3 post-error-callback data message')]
+                  (t/post-message! web3 message' callback))
+                (catch :default err
+                  (log/error :post-message-error err))
+                (finally
+                  (attempt-was-made! web3 id to)))))))
       (when-not @stop?
         (recur (async/<! (timeout delivery-loop-ms-interval)))))
     (async/go-loop [_ nil]
@@ -263,6 +272,3 @@
       (swap! messages #(update-in % key assoc
                                   :last-attempt 0
                                   :attempts 0)))))
-
-(defn reset-all-pending-messages! []
-  (reset! messages {}))

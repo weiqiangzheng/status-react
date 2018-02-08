@@ -35,6 +35,7 @@
    (let [db @re-frame.db/app-db]
      (send-ping (:web3 db) (:current-public-key db) chat-id {:counter 0})))
   ([web3 id chat-id {:keys [counter]}]
+   (println id chat-id web3 counter)
    (let [message {:to chat-id
                   :from id
                   :message-id (random/id)
@@ -44,7 +45,7 @@
                   :requires-ack? false}]
      (log/info "Received ping" counter)
      (println counter)
-     (if (> counter 100)
+     (if (> counter 2)
        (let [timer (- (datetime/now-ms) @timer)]
          (println "timer for 100 pings:" timer)
          (log/info "Tme for 100 pings" timer))
