@@ -48,7 +48,8 @@
     (if (or (not= (i/normalize-hex (:identity options))
                   (i/normalize-hex (:sig message)))
             ;; allow user to receive his own discoveries
-            (= type :discover))
+            (= type :discover)
+            (= (get-in message [:payload :type]) :system/ping))
       scope
       (create-error :filter-messages-error :silent))))
 
@@ -97,4 +98,3 @@
   [options]
   (fn [js-error js-message]
     (re-frame/dispatch [:handle-whisper-message js-error js-message options])))
-

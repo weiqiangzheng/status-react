@@ -60,25 +60,26 @@
                 (async/<! pending-message-queue)]
   (when message
     (prepare-message
-      web3 message
-      (fn [message']
-        (when (valid? :shh/pending-message message')
-          (let [group-id        (get-in message [:payload :group-id])
-                pending-message {:id            message-id
-                                 :ack?          (boolean ack?)
-                                 :message       message'
-                                 :to            to
-                                 :type          type
-                                 :group-id      group-id
-                                 :requires-ack? (boolean requires-ack?)
-                                 :attempts      0
-                                 :was-sent?     false}]
-            (when (and @pending-message-callback requires-ack?)
-              (@pending-message-callback :pending pending-message))
-            (swap! messages assoc-in [web3 message-id to] pending-message)
-            (when to
-              (swap! recipient->pending-message
-                     update to set/union #{[web3 message-id to]}))))))
+     web3 message
+     (fn [message']
+       (println message')
+       (when (valid? :shh/pending-message message')
+         (let [group-id        (get-in message [:payload :group-id])
+               pending-message {:id            message-id
+                                :ack?          (boolean ack?)
+                                :message       message'
+                                :to            to
+                                :type          type
+                                :group-id      group-id
+                                :requires-ack? (boolean requires-ack?)
+                                :attempts      0
+                                :was-sent?     false}]
+           (when (and @pending-message-callback requires-ack?)
+             (@pending-message-callback :pending pending-message))
+           (swap! messages assoc-in [web3 message-id to] pending-message)
+           (when to
+             (swap! recipient->pending-message
+                    update to set/union #{[web3 message-id to]}))))))
     (recur (async/<! pending-message-queue))))
 
 (defn set-pending-mesage-callback!
