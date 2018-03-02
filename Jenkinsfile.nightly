@@ -19,6 +19,7 @@ def installJSDeps() {
 
 node ('macos1'){
   def apkUrl = ''
+  def apkName = ''
   def ipaUrl = ''
   def testPassed = true
 
@@ -66,12 +67,12 @@ node ('macos1'){
       def artifact = (artifact_dir + 'app-release.apk')
       def server = Artifactory.server('artifacts')
       def shortCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(6)
-      def filename = 'im.status.ethereum-' + shortCommit + '.apk'
-      def newArtifact = (artifact_dir + filename)
-      sh ('mv ' + artifact + ' '  + newArtifact)
-      def uploadSpec = '{ "files": [ { "pattern": "*apk/release/' + filename + '", "target": "nightlies-local" }]}'
+      apkName = 'im.status.ethereum-' + shortCommit + '.apk'
+      def apkPath = (artifact_dir + apkName)
+      sh ('mv ' + artifact + ' '  + apkPath)
+      def uploadSpec = '{ "files": [ { "pattern": "*apk/release/' + apkName + '", "target": "nightlies-local" }]}'
       def buildInfo = server.upload(uploadSpec)
-      apkUrl = 'http://artifacts.status.im:8081/artifactory/nightlies-local/' + filename
+      apkUrl = 'http://artifacts.status.im:8081/artifactory/nightlies-local/' + apkName
 
       sh ('echo ARTIFACT Android: ' + apkUrl)
     }
@@ -80,11 +81,19 @@ node ('macos1'){
       withCredentials([string(credentialsId: 'diawi-token', variable: 'token')]) {
         def job = sh(returnStdout: true, script: 'curl https://upload.diawi.com/ -F token='+token+' -F file=@status/StatusIm.ipa -F find_by_udid=0 -F wall_of_apps=0 | jq -r ".job"').trim()
         sh 'sleep 10'
-        def hash = sh(returnStdout: true, script: "curl -vvv 'https://upload.diawi.com/status?token="+token+"&job="+job+"'|jq -r '.hash'").trim()  
+        def hash = sh(returnStdout: true, script: "curl -vvv 'https://upload.diawi.com/status?token="+token+"&job="+job+"'|jq -r '.hash'").trim()
         ipaUrl = 'https://i.diawi.com/' + hash
 
         sh ('echo ARTIFACT iOS: ' + ipaUrl)
       }
+    }
+
+    stage('Upload apk for e2e tests') {
+      if (env.CHANGE_ID != null){
+      withCredentials([string(credentialsId: 'SAUCE_ACCESS_KEY', variable: 'key'), string(credentialsId: 'SAUCE_USERNAME', variable: 'username')]){
+        sh('curl -u ' + username+ ':' + key + ' -X POST -H "Content-Type: application/octet-stream" https://saucelabs.com/rest/v1/storage/' + username + '/' + apkName + '?overwrite=true --data-binary @android/app/build/outputs/apk/release/app-release.apk')
+      }
+     }
     }
   } catch (e) {
     slackSend color: 'bad', message: 'Nightly build (develop) failed to build. ' + env.BUILD_URL
