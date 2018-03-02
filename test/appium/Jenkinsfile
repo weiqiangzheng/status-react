@@ -1,12 +1,35 @@
-node ('linux1'){sauce('12e007ad-48cf-4c20-92f3-b923bb5641bd'){
- checkout([$class: 'GitSCM', branches: [[name: 'tests/align-with-start-chat-redesign-#3195']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/status-im/status-react.git']]])
-            currentBuild.displayName = "PR-$pr_id"
-            try {withCredentials([string(credentialsId: 'GIT_HUB_TOKEN', variable: 'GIT_HUB_TOKEN'), string(credentialsId: 'SAUCE_ACCESS_KEY', variable: 'SAUCE_ACCESS_KEY'), string(credentialsId: 'SAUCE_USERNAME', variable: 'SAUCE_USERNAME')]){
-            sh 'cd test/appium/tests && python3 -m pytest -m all --pr_number=$pr_id --build=PR-$pr_id -n12 $apk'
-              }
-          }
-            finally {
-                saucePublisher()
-                junit testDataPublishers: [[$class: 'SauceOnDemandReportPublisher', jobVisibility: 'public']], testResults: 'test/appium/tests/*.xml' }
+final NIGHTLIES_URL = "http://artifacts.status.im:8081/artifactory/nightlies-local/"
+
+def findLatestApkName(artifactsUrl) {
+    def data = new URL(artifactsUrl).getText()
+
+    def buildDates = data.findAll(/\d{2}-[a-zA-Z]{3}-\d{4} \d{2}:\d{2}/)
+    def lastBuildDate = buildDates.sort { a, b ->
+    def dateFormat = "dd-MMM-yyyy HH:mm"
+    Date.parse(dateFormat, a) <=> Date.parse(dateFormat, b)
+    }.reverse()[0]
+
+    def apkName = (data =~ ">(.*k)</a>\\s*$lastBuildDate").findAll()[0][1]
+    return apkName
+}
+
+node ('linux1') {
+    sauce('12e007ad-48cf-4c20-92f3-b923bb5641bd') {
+        checkout([$class: 'GitSCM', branches: [[name: 'tests/align-with-start-chat-redesign-#3195']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/status-im/status-react.git']]])
+        def nightlyApk = null
+        if(!pr_id || !apk) {
+            nightlyApk = findLatestApk(NIGHTLIES_URL)
         }
+        currentBuild.displayName = $pr_id ? "PR-$pr_id" : nightlyApk
+        apk = apk ?: NIGHTLIES_URL + nightlyApk
+        try {
+            withCredentials([string(credentialsId: 'GIT_HUB_TOKEN', variable: 'GIT_HUB_TOKEN'), string(credentialsId: 'SAUCE_ACCESS_KEY', variable: 'SAUCE_ACCESS_KEY'), string(credentialsId: 'SAUCE_USERNAME', variable: 'SAUCE_USERNAME')]) {
+                sh 'cd test/appium/tests && python3 -m pytest -m all --pr_number=$pr_id --build=PR-$pr_id -n12 $apk'
+          }
+        }
+        finally {
+            saucePublisher()
+            junit testDataPublishers: [[$class: 'SauceOnDemandReportPublisher', jobVisibility: 'public']], testResults: 'test/appium/tests/*.xml'
+        }
+    }
 }
