@@ -68,4 +68,14 @@ RUN npm install -g react-native-cli
 # Install Maven
 RUN apt-get install -y maven
 
+## Install dependencies
+
+# Add files needed for installing dependencies
+# Use directory /build for that purpose
+ADD ./project.clj /build/project.clj
+
+RUN test -f /build/project.clj || (echo "Can't find project.clj. Did you mount your status-react directory to /workspace?"; exit 1;)
+RUN cd /build && lein deps
+RUN cd /build && npm install
+
 # END install Android SDK
