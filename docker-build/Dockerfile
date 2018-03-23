@@ -1,22 +1,5 @@
 FROM openjdk:8
 
-MAINTAINER ADAM Bene <adambene@adambene.com>
-
-# add a non-root user
-
-# install gosu - su and sudo Docker-friendly replacement
-# TODO: evaluate if this can be removed
-RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
-RUN curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.4/gosu-$(dpkg --print-architecture)" \
-    && curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.4/gosu-$(dpkg --print-architecture).asc" \
-    && gpg --verify /usr/local/bin/gosu.asc \
-    && rm /usr/local/bin/gosu.asc \
-    && chmod +x /usr/local/bin/gosu
-
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
 # install Node JS (https://github.com/nodejs/docker-node/blob/90d5e3df903b830d039d3fe8f30e3a62395db37e/7.5/Dockerfile)
 
 RUN groupadd --gid 1000 node \
@@ -81,5 +64,8 @@ RUN mkdir -p $LEIN_INSTALL \
 
 # Install React-Native
 RUN npm install -g react-native-cli
+
+# Install Maven
+RUN apt-get install -y maven
 
 # END install Android SDK
