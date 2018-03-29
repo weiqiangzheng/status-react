@@ -45,7 +45,7 @@
                        :params                  jail-params
                        :callback-events-creator (fn [jail-response]
                                                   [[::jail-command-data-response
-                                                    jail-response message opts]])}}) 
+                                                    jail-response opts]])}})
         {:db (update-in db [:contacts/contacts jail-id :jail-loaded-events]
                         conj [:request-command-message-data message opts])}))))
 
@@ -54,7 +54,7 @@
 (handlers/register-handler-fx
   ::jail-command-data-response
   [re-frame/trim-v]
-  (fn [{:keys [db]} [{{:keys [returned]} :result} {:keys [chat-id]} {:keys [proceed-event-creator]}]]
+  (fn [_ [{{:keys [returned]} :result} {:keys [proceed-event-creator]}]]
     (when proceed-event-creator
       {:dispatch (proceed-event-creator returned)})))
 

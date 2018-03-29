@@ -356,7 +356,7 @@
 ;; information in the process of converting to/from JSON, and we need to restore it
 (defn- restore-command-ref-keyword
   [orig-params]
-  (if [(get-in orig-params [:command :command :ref])]
+  (if (get-in orig-params [:command :command :ref])
     (update-in orig-params [:command :command :ref 1] keyword)
     orig-params))
 

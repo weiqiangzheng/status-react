@@ -11,9 +11,7 @@
             [status-im.data-store.local-storage :as local-storage]))
 
 (defn command-handler!
-  [_ [_
-      {:keys [command] :as params}
-      {:keys [result error]}]]
+  [_ [_ params {:keys [result error]}]]
   (let [{:keys [returned]} result
         {handler-error :error} returned]
     (cond
@@ -74,18 +72,18 @@
 
 (defn print-error-message! [message]
   (fn [_ params]
-    (when (:error (last params))
-      (show-popup "Error" (string/join "\n" [message params]))
-      (log/debug message params))))
+    (when-let [error (:error (last params))]
+      (show-popup message error)
+      (log/debug message error))))
 
 ;; TODO(alwx): rewrite
 (reg-handler :command-handler!
-  (after (print-error-message! "Error on command handling"))
+  (after (print-error-message! "Error during command execution"))
   (handlers/side-effect! command-handler!))
 
 (reg-handler
   :suggestions-handler
-  [(after (print-error-message! "Error on param suggestions"))]
+  [(after (print-error-message! "Error while showing suggestions"))]
   (handlers/side-effect! suggestions-handler!))
 
 (reg-handler

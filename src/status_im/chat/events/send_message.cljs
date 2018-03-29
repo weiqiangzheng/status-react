@@ -35,13 +35,13 @@
 (handlers/register-handler-fx
   :chat-send-message/send-command
   message-model/send-interceptors
-  (fn [cofx [_ params]]
+  (fn [cofx [params]]
     (message-model/send-command cofx params)))
 
 (handlers/register-handler-fx
   :chat-send-message/from-jail
-  [re-frame/trim-v]
-  (fn [cofx [{:keys [chat-id message]}]]
+  message-model/send-interceptors
+  (fn [cofx [_ {:keys [chat-id message]}]]
     (let [parsed-message (types/json->clj message)]
       (message-model/handle-message-from-bot cofx {:message parsed-message
                                                    :chat-id chat-id}))))

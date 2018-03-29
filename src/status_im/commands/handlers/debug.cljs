@@ -44,43 +44,43 @@
   (if (and name
            whisper-identity
            (or dapp-url bot-url))
-    (if (or (not (get contacts whisper-identity))
-            (get-in contacts [whisper-identity :debug?]))
-      (let [dapp (merge dapp-data {:dapp?  true
-                                   :debug? true})]
-        (re-frame/dispatch [:update-chat! {:chat-id whisper-identity
-                                           :name    name
-                                           :debug?  true}])
-        (if (get contacts whisper-identity)
-          (do (re-frame/dispatch [:update-contact! dapp])
-              (respond {:type :ok
-                        :text "The DApp or bot has been updated."}))
-          (do (re-frame/dispatch [:add-contacts [dapp]])
-              (re-frame/dispatch [:open-chat-with-contact dapp])
-              (respond {:type :ok
-                        :text "The DApp or bot has been added."}))))
-      (respond {:type :error
-                :text "Your DApp or bot should be debuggable."}))
+    (let [{:keys [debug?] :as contact} (get contacts whisper-identity)]
+      (if (or (not contact) debug?)
+        (let [dapp (merge dapp-data {:dapp?  true
+                                     :debug? true})]
+          (re-frame/dispatch [:update-chat! {:chat-id whisper-identity
+                                             :name    name
+                                             :debug?  true}])
+          (if contact
+            (do (re-frame/dispatch [:add-contacts [dapp]])
+                (respond {:type :ok
+                          :text "The DApp or bot has been updated."}))
+            (do (re-frame/dispatch [:add-contacts [dapp]])
+                (re-frame/dispatch [:open-chat-with-contact dapp])
+                (respond {:type :ok
+                          :text "The DApp or bot has been added."}))))
+        (respond {:type :error
+                  :text "Your DApp or bot should be debuggable."})))
     (respond {:type :error
               :text (str "You can add either DApp or bot. The object should contain \"name\", "
                          "\"whisper-identity\", and \"dapp-url\" or \"bot-url\" fields.")})))
 
 (defn remove-contact
   [{:keys [chats]} {:keys [whisper-identity]}]
-  (if (get chats whisper-identity)
-    (if (get-in chats [whisper-identity :debug?])
+  (if-let [{:keys [debug?]} (get chats whisper-identity)]
+    (if debug?
       (do (re-frame/dispatch [:remove-chat whisper-identity])
+          (re-frame/dispatch [:remove-contact whisper-identity #(and (:dapp? %) (:debug? %))])
           (respond {:type :ok
                     :text "The DApp or bot has been removed."}))
       (respond {:type :error
                 :text "Your DApp or bot should be debuggable."}))
     (respond {:type :error
-              :text "There is no such DApp or bot."}))
-  (re-frame/dispatch [:remove-contact whisper-identity #(and (:dapp? %) (:debug? %))]))
+              :text (str "There is no such DApp or bot for " whisper-identity " .")})))
 
 (defn contact-changed
   [{:keys          [webview-bridge current-chat-id]
-    :contacts/keys [contacts]} {:keys [whisper-identity] :as dapp-data}]
+    :contacts/keys [contacts]} {:keys [whisper-identity]}]
   (when (get-in contacts [whisper-identity :debug?])
     (when (and (= current-chat-id whisper-identity)
                webview-bridge)

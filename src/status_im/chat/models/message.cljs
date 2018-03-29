@@ -40,7 +40,7 @@
 
 (defn receive
   [{:keys [db now] :as cofx}
-   {:keys [from group-id chat-id content-type content message-id timestamp clock-value]
+   {:keys [from group-id chat-id content-type content timestamp clock-value]
     :as   message}]
   (let [{:keys [current-chat-id view-id
                 access-scope->commands-responses] :contacts/keys [contacts]} db
@@ -126,7 +126,7 @@
   [{{:accounts/keys [current-account-id] :as db} :db :as cofx}
    {{:keys [message-type]
      :as   message} :message
-    :keys [chat-id command] :as args}]
+    :keys [chat-id command]}]
   (if command
     (when-let [text-message (get-in command [:content :handler-data :text-message])]
       (handle-message-from-bot cofx {:message text-message
@@ -214,7 +214,7 @@
     request-command :command
     :keys           [prefill prefillBotDb]
     :as             request}
-   {:keys [id params command to-message handler-data content-type]}]
+   {:keys [id params command to-message handler-data content-type] :as cmd}]
   (let [content (if request
                   {:command        request-command
                    :params         (assoc request-params :bot-db (:bot-db params))

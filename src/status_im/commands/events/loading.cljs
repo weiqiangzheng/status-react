@@ -26,7 +26,7 @@
       (status/parse-jail
        jail-id jail-resource
        (fn [jail-response]
-         (let [converted (types/json->clj jail-response)] 
+         (let [converted (types/json->clj jail-response)]
            (re-frame/dispatch [::proceed-loading jail-id (if config/jsc-enabled?
                                                            (update converted :result types/json->clj) 
                                                            converted)])))))))
@@ -37,11 +37,6 @@
     (utils/show-popup title msg)))
 
 ;; Handlers
-(defn- valid-network-resource?
-  [response]
-  (some-> (.. response -headers)
-          (get "Content-type")
-          (string/includes? "application/javascript")))
 
 (defn- evaluate-commands-in-jail
   [{:keys [db get-local-storage-data]} commands-resource whisper-identity]
@@ -64,7 +59,7 @@
     (if-let [commands-resource (js-resources/get-resource bot-url)]
       (merge-with into fx (evaluate-commands-in-jail cofx commands-resource whisper-identity))
       (update fx :http-get-n conj {:url                   bot-url
-                                   :response-validator    valid-network-resource?
+                                   ;:response-validator    valid-network-resource?
                                    :success-event-creator (fn [commands-resource]
                                                             [::evaluate-commands-in-jail commands-resource whisper-identity])
                                    :failure-event-creator (fn [error-response]

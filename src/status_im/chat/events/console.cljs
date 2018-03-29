@@ -61,7 +61,7 @@
    (fn [{:keys [db random-id now]} {:keys [params]}]
      (let [debug? (= "On" (:mode params))]
        (-> {:db db}
-           (accounts-events/account-update {:debug? debug?
+           (accounts-events/account-update {:debug?       debug?
                                             :last-updated now})
            (assoc :dispatch-n (if debug?
                                 [[:initialize-debugging {:force-start? true}]

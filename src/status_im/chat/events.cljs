@@ -335,11 +335,10 @@
 
 (defn remove-chats [db chat-id]
   (let [chat (get-in db [:chats chat-id])]
-    {:db                  (-> db
-                              (update :chats dissoc chat-id)
-                              (update :deleted-chats (fnil conj #{}) chat-id))
-     :delete-chat          chat
-     :delete-chat-messages chat}))
+    {:db          (-> db
+                      (update :chats dissoc chat-id)
+                      (update :deleted-chats (fnil conj #{}) chat-id))
+     :delete-chat chat}))
 
 (handlers/register-handler-fx
   :remove-chat
