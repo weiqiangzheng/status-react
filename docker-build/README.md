@@ -1,7 +1,7 @@
 # Build
 
 ```
-docker build -t status-react-native-v2:latest .
+docker build -f docker-build/Dockerfile -t status-react-native-v2:latest .
 ```
 
 # Run
@@ -9,7 +9,7 @@ docker build -t status-react-native-v2:latest .
 ## Bash
 
 ```
-docker run -t -i --rm --name build status-react-native-v2 bash
+docker run -t -i -v $(pwd):/workspace -w /workspace --rm --name build status-react-native-v2 bash
 ```
 
 ## Build app

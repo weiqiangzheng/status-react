@@ -6,7 +6,8 @@ RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
 ENV NPM_CONFIG_LOGLEVEL info
-ENV NODE_VERSION 9.9.0
+# that's the only version that doesn't hang on installing react-native-http inside docker
+ENV NODE_VERSION 8.9.1
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
   && tar -xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
@@ -39,8 +40,12 @@ ENV ANDROID_SDK /usr/local/android-sdk-linux
 ENV PATH ${ANDROID_HOME}/tools:$ANDROID_HOME/platform-tools:$PATH
 
 # Install Android SDK components
-
-ENV ANDROID_COMPONENTS platform-tools,build-tools-23.0.1,build-tools-23.0.3,android-23
+# Get versions from https://developer.android.com/studio/releases/platform-tools.html
+# Or in `/usr/local/android-sdk-linux/tools/bin/sdkmanager --list` (or just `sdkmanager --list` on your laptop).
+# So, here is the thing - app depends on different Android components, but there is no (obvious to me) way
+# to get this list before you try to compile/build the app. This list of versions is crafted manually, analyzing
+# errors output of gradle. If new component requirements will be added, this list needs to be updated manually.
+ENV ANDROID_COMPONENTS platform-tools,build-tools-27.0.3,build-tools-26.0.3,build-tools-25.0.3,build-tools-24.03,android-24,android-25,android-25,android-27
 ENV GOOGLE_COMPONENTS extra-android-m2repository,extra-google-m2repository,extra-google-google_play_services,extra-google-gcm
 
 RUN echo y | android update sdk --no-ui --all --filter "${ANDROID_COMPONENTS}" ; \
@@ -76,6 +81,25 @@ ADD ./project.clj /build/project.clj
 
 RUN test -f /build/project.clj || (echo "Can't find project.clj. Did you mount your status-react directory to /workspace?"; exit 1;)
 RUN cd /build && lein deps
+
+ADD ./package.json ./package-lock.json /build/
 RUN cd /build && npm install
+#RUN cd /build && ln -sf './node_modules/re-natal/index.js' './re-natal'
+#RUN cd /build && ./re-natal deps && ./re-natal use-figwheel && lein re-frisk use-re-natal && ./re-natal enable-source-maps
+#RUN cd /build && mvn -f modules/react-native-status/ios/RCTStatus dependency:unpack
+
+ENV ANDROID_COMPONENTS platform-tools,build-tools-27.0.3,build-tools-26.0.2,build-tools-25.0.3,build-tools-24.03
+ENV ANDROID_PLATFORMS android-24,android-25,android-25,android-27
+ENV GOOGLE_COMPONENTS extra-android-m2repository,extra-google-m2repository,extra-google-google_play_services,extra-google-gcm
+
+RUN echo y | android update sdk --no-ui --all --filter "${ANDROID_COMPONENTS}" ; \
+    echo y | android update sdk --no-ui --all --filter "${ANDROID_PLATFORMS}" ; \
+    echo y | android update sdk --no-ui --all --filter "${GOOGLE_COMPONENTS}"
+
+RUN yes | /usr/local/android-sdk-linux/tools/bin/sdkmanager --update
+RUN /usr/local/android-sdk-linux/tools/bin/sdkmanager --install ndk-bundle
+
+ENV ANDROID_NDK_HOME /usr/local/android-sdk-linux/ndk-bundle/build
+RUN apt-get install -y make
 
 # END install Android SDK
