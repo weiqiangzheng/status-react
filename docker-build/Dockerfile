@@ -21,10 +21,14 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 ENV DEBIAN_FRONTEND noninteractive
 
 # Install dependencies
-RUN dpkg --add-architecture i386 && \
-    apt-get update && \
-    apt-get install -yq libc6:i386 libstdc++6:i386 zlib1g:i386 libncurses5:i386 --no-install-recommends && \
+RUN apt-get update && \
+    apt-get install -yq libc6 libstdc++6 zlib1g libncurses5 make file --no-install-recommends && \
     apt-get clean
+
+#RUN dpkg --add-architecture i386 && \
+#    apt-get update && \
+#    apt-get install -yq libc6:i386 libstdc++6:i386 zlib1g:i386 libncurses5:i386 make --no-install-recommends && \
+#    apt-get clean
 
 # Download and untar SDK
 ENV ANDROID_SDK_URL https://dl.google.com/android/repository/tools_r25.2.3-linux.zip
@@ -37,6 +41,7 @@ RUN ls /usr/local/android-sdk-linux
 RUN ls /usr/local/android-sdk-linux/tools
 ENV ANDROID_HOME /usr/local/android-sdk-linux
 ENV ANDROID_SDK /usr/local/android-sdk-linux
+ENV ANDROID_NDK_HOME /usr/local/android-sdk-linux/ndk-bundle/build
 ENV PATH ${ANDROID_HOME}/tools:$ANDROID_HOME/platform-tools:$PATH
 
 # Install Android SDK components
@@ -45,11 +50,19 @@ ENV PATH ${ANDROID_HOME}/tools:$ANDROID_HOME/platform-tools:$PATH
 # So, here is the thing - app depends on different Android components, but there is no (obvious to me) way
 # to get this list before you try to compile/build the app. This list of versions is crafted manually, analyzing
 # errors output of gradle. If new component requirements will be added, this list needs to be updated manually.
-ENV ANDROID_COMPONENTS platform-tools,build-tools-27.0.3,build-tools-26.0.3,build-tools-25.0.3,build-tools-24.03,android-24,android-25,android-25,android-27
+ENV ANDROID_COMPONENTS platform-tools,android-27,android-26,android-25,android-24,build-tools-27.0.3,build-tools-26.0.3,build-tools-25.0.3,build-tools-24.03
 ENV GOOGLE_COMPONENTS extra-android-m2repository,extra-google-m2repository,extra-google-google_play_services,extra-google-gcm
 
 RUN echo y | android update sdk --no-ui --all --filter "${ANDROID_COMPONENTS}" ; \
     echo y | android update sdk --no-ui --all --filter "${GOOGLE_COMPONENTS}"
+
+RUN echo y | /usr/local/android-sdk-linux/tools/bin/sdkmanager --update
+
+# If you're unlucky person that tries to undestand the whole dependencies setup process, here is
+# an explanation: after installing build-tools > 25, `android` command becomes deprecated, changes its command
+# line options (they change it every relese, because fuck you developers' experience), so now we need
+# use a different command to continue installation of Android SDK/NDK components.
+RUN /usr/local/android-sdk-linux/tools/bin/sdkmanager --install ndk-bundle
 
 # Support Gradle
 ENV TERM dumb
@@ -87,19 +100,5 @@ RUN cd /build && npm install
 #RUN cd /build && ln -sf './node_modules/re-natal/index.js' './re-natal'
 #RUN cd /build && ./re-natal deps && ./re-natal use-figwheel && lein re-frisk use-re-natal && ./re-natal enable-source-maps
 #RUN cd /build && mvn -f modules/react-native-status/ios/RCTStatus dependency:unpack
-
-ENV ANDROID_COMPONENTS platform-tools,build-tools-27.0.3,build-tools-26.0.2,build-tools-25.0.3,build-tools-24.03
-ENV ANDROID_PLATFORMS android-24,android-25,android-25,android-27
-ENV GOOGLE_COMPONENTS extra-android-m2repository,extra-google-m2repository,extra-google-google_play_services,extra-google-gcm
-
-RUN echo y | android update sdk --no-ui --all --filter "${ANDROID_COMPONENTS}" ; \
-    echo y | android update sdk --no-ui --all --filter "${ANDROID_PLATFORMS}" ; \
-    echo y | android update sdk --no-ui --all --filter "${GOOGLE_COMPONENTS}"
-
-RUN yes | /usr/local/android-sdk-linux/tools/bin/sdkmanager --update
-RUN /usr/local/android-sdk-linux/tools/bin/sdkmanager --install ndk-bundle
-
-ENV ANDROID_NDK_HOME /usr/local/android-sdk-linux/ndk-bundle/build
-RUN apt-get install -y make
 
 # END install Android SDK
