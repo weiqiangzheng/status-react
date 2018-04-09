@@ -30,7 +30,8 @@
             android:icon="@mipmap/ic_launcher"
             android:theme="@style/AppTheme"
             android:name=".MainApplication"
-            android:largeHeap="true">
+            android:largeHeap="true"
+            android:testOnly="false">
       <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
         <activity
                 android:name=".MainActivity"
