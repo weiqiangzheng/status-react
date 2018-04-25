@@ -90,13 +90,18 @@
    (merge testnet-networks
           (when config/mainnet-networks-enabled? mainnet-networks))))
 
+;; TODO(oskarth): Update this test enode to cluster once deployed, currently local one
+;; TODO(oskarth): Hide paid test node behind flag
 (def default-wnodes
   {:testnet {"main"   {:id      "main"
                        :name    "Status testnet mailserver A"
                        :address "enode://fa63a6cc730468c5456eab365b2a7a68a166845423c8c9acc363e5f8c4699ff6d954e7ec58f13ae49568600cff9899561b54f6fc2b9923136cd7104911f31cce@163.172.168.202:30303"}
              "backup" {:id      "backup"
                        :name    "Status testnet mailserver B"
-                       :address "enode://90cbf961c87eb837adc1300a0a6722a57134d843f0028a976d35dff387f101a2754842b6b694e50a01093808f304440d4d968bcbc599259e895ff26e5a1a17cf@51.15.194.39:30303"}}
+                       :address "enode://90cbf961c87eb837adc1300a0a6722a57134d843f0028a976d35dff387f101a2754842b6b694e50a01093808f304440d4d968bcbc599259e895ff26e5a1a17cf@51.15.194.39:30303"}
+             "paid" {:id      "paid"
+                     :name    "Status testnet mailserver paid, experimental"
+                     :address "enode://9f0a55f116aedb40d4036d9a385d505d9c183fd708ef1aa2f883895df97864f758eee911c26c86732ae13a57664a076de2527189f983ee24dda2a4cb5f5db777@127.0.0.1:30303"}}
    :mainnet {"main" {:id      "main"
                      :name    "Status mainnet mailserver"
                      :address "enode://b963569aac14785f756ecf97e7549a513dea993a1bc744c4f8efe2b4e9479500dd3f5d18f3da19f6550b8bd0d8770350950c9a7da8168b44865402dcc9a51657@51.15.35.110:30403"}}})
