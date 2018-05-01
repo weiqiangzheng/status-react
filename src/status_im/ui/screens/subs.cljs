@@ -14,6 +14,7 @@
             status-im.ui.screens.network-settings.subs
             status-im.ui.screens.offline-messaging-settings.subs
             status-im.ui.screens.browser.subs
+            status-im.ui.screens.extensions.subs
             status-im.bots.subs
             status-im.ui.screens.add-new.new-chat.subs
             status-im.ui.screens.profile.subs))

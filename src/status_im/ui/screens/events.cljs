@@ -23,6 +23,7 @@
             status-im.ui.screens.wallet.transactions.events
             status-im.ui.screens.wallet.choose-recipient.events
             status-im.ui.screens.browser.events
+            status-im.ui.screens.extensions.events
             status-im.ui.screens.offline-messaging-settings.events
             status-im.ui.screens.usage-data.events
             [re-frame.core :as re-frame]
@@ -275,6 +276,7 @@
                           [:load-contact-groups]
                           [:initialize-chats]
                           [:initialize-browsers]
+                          [:initialize-extensions]
                           [:initialize-debugging {:address address}]
                           [:send-account-update-if-needed]
                           [:process-pending-messages]

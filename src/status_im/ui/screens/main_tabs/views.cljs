@@ -30,6 +30,12 @@
                           :icon-inactive :icons/profile
                           :icon-active   :icons/profile-active}
     :count-subscription  :get-profile-unread-messages-number
+    :accessibility-label :profile-tab-button}
+   {:view-id             :extensions
+    :content             {:title         (i18n/label :t/profile)
+                          :icon-inactive :icons/profile
+                          :icon-active   :icons/profile-active}
+    :count-subscription  :get-profile-unread-messages-number
     :accessibility-label :profile-tab-button}])
 
 (defn- tab-content [{:keys [title icon-active icon-inactive]}]

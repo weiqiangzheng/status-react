@@ -42,6 +42,7 @@
             [status-im.ui.screens.network-settings.network-details.views :refer [network-details]]
             [status-im.ui.screens.offline-messaging-settings.views :refer [offline-messaging-settings]]
             [status-im.ui.screens.browser.views :refer [browser]]
+            [status-im.ui.screens.extensions.views :refer [extensions]]
             [status-im.ui.screens.add-new.open-dapp.views :refer [open-dapp dapp-description]]
             [status-im.ui.screens.intro.views :refer [intro]]
             [status-im.ui.screens.accounts.create.views :refer [create-account]]
@@ -124,6 +125,7 @@
                         :usage-data usage-data
                         (:home :wallet :my-profile) main-tabs
                         :browser browser
+                        :extensions extensions
                         :open-dapp open-dapp
                         :dapp-description dapp-description
                         :wallet-send-transaction send-transaction

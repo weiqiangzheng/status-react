@@ -14,6 +14,7 @@
             status-im.ui.screens.network-settings.db
             status-im.ui.screens.offline-messaging-settings.db
             status-im.ui.screens.browser.db
+            status-im.ui.screens.extensions.db
             status-im.ui.screens.add-new.db
             status-im.ui.screens.add-new.new-public-chat.db))
 
@@ -166,6 +167,7 @@
                   :inbox/wnodes
                   :inbox/password
                   :browser/browsers
+                  :extension/extensions
                   :browser/options
                   :new/open-dapp
                   :navigation/screen-params
