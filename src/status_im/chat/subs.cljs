@@ -213,6 +213,7 @@
   :get-current-chat-messages
   :<- [:get-current-chat]
   (fn [{:keys [messages]}]
+    (println ":get-current-chat-messages")
     (time
      (-> messages sort-messages #_intersperse-datemarks #_messages-stream))))
 

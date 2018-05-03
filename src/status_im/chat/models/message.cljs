@@ -92,13 +92,14 @@
 
 (defn receive
   [{:keys [chat-id message-id] :as message} {:keys [now] :as cofx}]
-  (handlers-macro/merge-fx cofx
-                     (chat-model/upsert-chat {:chat-id chat-id
-                                              ; We activate a chat again on new messages
-                                              :is-active true
-                                              :timestamp now})
-                     (add-received-message message)
-                     (requests-events/add-request chat-id message-id)))
+  (println "receive:")
+  (time (handlers-macro/merge-fx cofx
+                                 (chat-model/upsert-chat {:chat-id chat-id
+                                        ; We activate a chat again on new messages
+                                                          :is-active true
+                                                          :timestamp now})
+                                 (add-received-message message)
+                                 (requests-events/add-request chat-id message-id))))
 
 (defn system-message [chat-id message-id timestamp content]
   {:message-id   message-id
