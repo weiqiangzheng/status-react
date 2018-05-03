@@ -212,10 +212,8 @@
 (reg-sub
   :get-current-chat-messages
   :<- [:get-current-chat]
-  (fn [{:keys [messages]}]
-    (println ":get-current-chat-messages")
-    (time
-     (-> messages sort-messages #_intersperse-datemarks #_messages-stream))))
+  (fn [{:keys [messages]}] 
+    (-> messages sort-messages #_intersperse-datemarks #_messages-stream)))
 
 (reg-sub
   :get-commands-for-chat

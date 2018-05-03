@@ -85,14 +85,12 @@
       (utils/update-if-present :content prepare-content)))
 
 (defn save
-  [{:keys [message-id content from] :as message}] 
+  [{:keys [message-id content from] :as message}]
   (when-not (data-store/exists? message-id)
-    (println "just save:")
-    (time
-     (data-store/save (prepare-message (merge default-values
-                                              message
-                                              {:from      (or from "anonymous")
-                                               :received-timestamp (datetime/timestamp)}))))))
+    (data-store/save (prepare-message (merge default-values
+                                             message
+                                             {:from      (or from "anonymous")
+                                              :received-timestamp (datetime/timestamp)})))))
 (defn delete
   [message-id]
   (when (data-store/exists? message-id)

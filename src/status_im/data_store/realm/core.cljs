@@ -22,19 +22,19 @@
 
 (defn realm-version
   [file-name encryption-key]
-    (if encryption-key
-      (.schemaVersion rn-dependencies/realm file-name (to-buffer encryption-key))
-      (.schemaVersion rn-dependencies/realm file-name)))
+  (if encryption-key
+    (.schemaVersion rn-dependencies/realm file-name (to-buffer encryption-key))
+    (.schemaVersion rn-dependencies/realm file-name)))
 
 (defn open-realm
   [options file-name encryption-key]
-    (log/debug "Opening realm at " file-name "...")
-    (let [options-js (clj->js (assoc options :path file-name))]
-      (when encryption-key
-        (log/debug "Using encryption key...")
-        (set! (.-encryptionKey options-js) (to-buffer encryption-key)))
-      (when (cljs.core/exists? js/window)
-        (rn-dependencies/realm. options-js))))
+  (log/debug "Opening realm at " file-name "...")
+  (let [options-js (clj->js (assoc options :path file-name))]
+    (when encryption-key
+      (log/debug "Using encryption key...")
+      (set! (.-encryptionKey options-js) (to-buffer encryption-key)))
+    (when (cljs.core/exists? js/window)
+      (rn-dependencies/realm. options-js))))
 
 (defn- delete-realm
   [file-name]
@@ -131,7 +131,11 @@
   ([realm schema-name obj]
    (create realm schema-name obj false))
   ([realm schema-name obj update?]
-   (.create realm (name schema-name) (clj->js obj) update?)))
+   (let [obj-to-save (select-keys obj (keys (get-in entity->schemas [schema-name :properties])))] 
+     (.create realm
+              (name schema-name)
+              (clj->js obj-to-save)
+              update?))))
 
 (defn save
   ([realm schema-name obj]

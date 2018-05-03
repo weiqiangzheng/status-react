@@ -71,35 +71,34 @@
                                                        request-command)
         new-timestamp                             (or timestamp now)]
     (handlers-macro/merge-fx cofx
-                       (add-message chat-id
-                                    (cond-> (assoc message
-                                                   :timestamp        new-timestamp
-                                                   :show?            true)
-                                      public-key
-                                      (assoc :user-statuses {public-key (if current-chat? :seen :received)})
+                             (add-message chat-id
+                                          (cond-> (assoc message
+                                                         :timestamp        new-timestamp
+                                                         :show?            true)
+                                            public-key
+                                            (assoc :user-statuses {public-key (if current-chat? :seen :received)})
 
-                                      (not clock-value)
-                                      (assoc :clock-value (utils.clocks/send last-clock-value)) ; TODO (cammeelos): for backward compatibility, we use received time to be removed when not an issue anymore
-                                      command-request?
-                                      (assoc-in [:content :request-command-ref]
-                                                (lookup-response-ref access-scope->commands-responses
-                                                                     current-account chat contacts request-command)))
-                                    current-chat?)
-                       (send-message-seen chat-id message-id (and public-key
-                                                                  current-chat?
-                                                                  (not (chat-model/bot-only-chat? db chat-id))
-                                                                  (not (= constants/system from)))))))
+                                            (not clock-value)
+                                            (assoc :clock-value (utils.clocks/send last-clock-value)) ; TODO (cammeelos): for backward compatibility, we use received time to be removed when not an issue anymore
+                                            command-request?
+                                            (assoc-in [:content :request-command-ref]
+                                                      (lookup-response-ref access-scope->commands-responses
+                                                                           current-account chat contacts request-command)))
+                                          current-chat?)
+                             (send-message-seen chat-id message-id (and public-key
+                                                                        current-chat?
+                                                                        (not (chat-model/bot-only-chat? db chat-id))
+                                                                        (not (= constants/system from)))))))
 
 (defn receive
   [{:keys [chat-id message-id] :as message} {:keys [now] :as cofx}]
-  (println "receive:")
-  (time (handlers-macro/merge-fx cofx
-                                 (chat-model/upsert-chat {:chat-id chat-id
+  (handlers-macro/merge-fx cofx
+                           (chat-model/upsert-chat {:chat-id chat-id
                                         ; We activate a chat again on new messages
-                                                          :is-active true
-                                                          :timestamp now})
-                                 (add-received-message message)
-                                 (requests-events/add-request chat-id message-id))))
+                                                    :is-active true
+                                                    :timestamp now})
+                           (add-received-message message)
+                           (requests-events/add-request chat-id message-id)))
 
 (defn system-message [chat-id message-id timestamp content]
   {:message-id   message-id
@@ -212,10 +211,10 @@
         message-id      (transport.utils/message-id send-record)
         message-with-id (assoc message :message-id message-id)]
     (handlers-macro/merge-fx cofx
-                       (chat-model/upsert-chat {:chat-id chat-id
-                                                :timestamp now})
-                       (add-message chat-id message-with-id true)
-                       (send chat-id message-id send-record))))
+                             (chat-model/upsert-chat {:chat-id chat-id
+                                                      :timestamp now})
+                             (add-message chat-id message-with-id true)
+                             (send chat-id message-id send-record))))
 
 (defn update-message-status [{:keys [chat-id message-id from] :as message} status {:keys [db]}]
   (let [updated-message (assoc-in message [:user-statuses from] status)]
@@ -286,13 +285,13 @@
 (defn send-command
   [{{:keys [current-public-key chats] :as db} :db :keys [now] :as cofx} params]
   (let [{{:keys [handler-data to-message command] :as content} :command chat-id :chat-id} params
-        ; We send commands to deleted chats as well, i.e. signed later transactions
+                                        ; We send commands to deleted chats as well, i.e. signed later transactions
         chat    (or (get chats chat-id) {:chat-id chat-id})
         request (:request handler-data)]
     (handlers-macro/merge-fx cofx
-                       (upsert-and-send (prepare-command-message current-public-key chat now request content))
-                       (add-console-responses command handler-data)
-                       (requests-events/request-answered chat-id to-message))))
+                             (upsert-and-send (prepare-command-message current-public-key chat now request content))
+                             (add-console-responses command handler-data)
+                             (requests-events/request-answered chat-id to-message))))
 
 (defn invoke-console-command-handler
   [{:keys [db] :as cofx} {:keys [command] :as command-params}]
