@@ -122,8 +122,8 @@
   [id->messages]
   (->> id->messages
        vals
-      (filter :show?)
-      (sort-by (juxt (comp unchecked-negate :clock-value) :message-id))))
+       (filter :show?)
+       (sort-by (juxt (comp unchecked-negate :clock-value) :message-id))))
 
 (defn- add-datemark [{:keys [timestamp] :as msg}]
    (assoc msg :datemark (time/day-relative timestamp)))
@@ -137,12 +137,12 @@
   [messages]
   (when (seq messages)
     (let [messages-with-datemarks (transduce (comp
-                                               (map add-datemark)
-                                               (map add-timestamp))
+                                              (map add-datemark)
+                                              (map add-timestamp))
                                              (completing intersperse-datemark :acc)
                                              {:acc []}
                                              messages)]
-      ; Append last datemark
+                                        ; Append last datemark
       (conj messages-with-datemarks {:value (:datemark (peek messages-with-datemarks))
                                      :type  :datemark}))))
 
@@ -189,18 +189,18 @@
   "Enhances the messages in message sequence interspersed with datemarks
   with derived stream context information, like:
   `:first-in-group?`, `last-in-group?`, `:same-direction?`, `:last?` and `:last-outgoing?` flags."
-  [ordered-messages]
+  [ordered-messages] 
   (when (seq ordered-messages)
-    (let [initial-message (first ordered-messages)
-          message-with-metadata (assoc initial-message
-                                       :last-in-group? true
-                                       :last? true
-                                       :last-outgoing? (:outgoing initial-message))]
-      (->> (rest ordered-messages)
-           (reduce add-positional-metadata
-                   {:stream             [message-with-metadata]
-                    :last-outgoing-seen (:last-outgoing? message-with-metadata)})
-           :stream))))
+           (let [initial-message (first ordered-messages)
+                 message-with-metadata (assoc initial-message
+                                              :last-in-group? true
+                                              :last? true
+                                              :last-outgoing? (:outgoing initial-message))]
+             (->> (rest ordered-messages)
+                  (reduce add-positional-metadata
+                          {:stream             [message-with-metadata]
+                           :last-outgoing-seen (:last-outgoing? message-with-metadata)})
+                  :stream))))
 
 (reg-sub
   :get-ordered-chat-messages
@@ -213,7 +213,8 @@
   :get-current-chat-messages
   :<- [:get-current-chat]
   (fn [{:keys [messages]}]
-    (-> messages sort-messages intersperse-datemarks messages-stream)))
+    (time
+     (-> messages sort-messages #_intersperse-datemarks #_messages-stream))))
 
 (reg-sub
   :get-commands-for-chat
