@@ -14,7 +14,7 @@ def installJSDeps() {
     }
 }
 
-node ('master') {
+node ('linux') {
   def apkUrl = ''
   def ipaUrl = ''
   def testPassed = true
