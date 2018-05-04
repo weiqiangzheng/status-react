@@ -19,6 +19,8 @@ node ('linux') {
   def ipaUrl = ''
   def testPassed = true
   def branch;
+  // FIXME
+  def BRANCH_NAME = 'pr-parallel'
 
   load "$HOME/env.groovy"
 
