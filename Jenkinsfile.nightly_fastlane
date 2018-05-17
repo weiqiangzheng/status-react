@@ -11,13 +11,13 @@ def installJSDeps() {
     def installed = false
     while (!installed && attempt <= maxAttempts) {
         println "#${attempt} attempt to install npm deps"
-        sh 'npm install'
+        sh 'npm install --verbose'
         installed = fileExists('node_modules/web3/index.js')
         attemp = attempt + 1
     }
 }
 
-node ('master'){
+node ('linux'){
   def apkUrl = ''
   def ipaUrl = ''
   def testPassed = true
@@ -26,36 +26,36 @@ node ('master'){
   load "$HOME/env.groovy"
 
   try {
-    node('linux') {
-      stage('Git & Dependencies') {
-        slackSend color: 'good', message: 'Nightly build started. ' + env.BUILD_URL
+    stage('Git & Dependencies') {
+      slackSend color: 'good', message: 'Nightly build started. ' + env.BUILD_URL
 
-        checkout scm
+      checkout scm
 
-        sh 'git fetch --tags'
-        latest_tag = sh(returnStdout: true, script: 'git describe --tags `git rev-list --tags=release --max-count=1`').trim()
-        sh 'rm -rf node_modules'
-        sh 'cp .env.nightly .env'
-        sh 'lein deps'
-        installJSDeps()
+      sh 'git fetch --tags'
+      latest_tag = sh(returnStdout: true, script: 'git describe --tags `git rev-list --tags=release --max-count=1`').trim()
+      sh 'rm -rf node_modules'
+      sh 'cp .env.nightly .env'
+      sh 'lein deps'
+      installJSDeps()
 
-        sh 'mvn -f modules/react-native-status/ios/RCTStatus dependency:unpack'
-        sh 'cd ios && pod install && cd ..'
-      }
+      sh 'mvn -f modules/react-native-status/ios/RCTStatus dependency:unpack'
+      sh 'cd ios && pod install && cd ..'
+    }
 
-      stage('Tests') {
-        sh 'lein test-cljs'
-      }
+    stage('Tests') {
+      sh 'lein test-cljs'
+    }
 
-      stage('Build') {
-        sh 'lein prod-build'
-      }
+    stage('Build') {
+      sh 'lein prod-build'
+      stash includes: '*', name: 'builtSources'
     }
 
     parallel (
       phase1: {
         node('macos') {
           stage('Build (iOS)') {
+            unstash 'builtSources'
             withCredentials([string(credentialsId: 'jenkins_pass', variable: 'password')]) {
               def build_no = sh(returnStdout: true, script: 'git rev-list --count HEAD').trim()
               sh ('plutil -replace CFBundleShortVersionString  -string ' + latest_tag + ' ios/StatusIm/Info.plist')
@@ -67,6 +67,7 @@ node ('master'){
             }
           }
           stage('Deploy (iOS)') {
+            unstash 'builtSources'
             withCredentials([string(credentialsId: 'diawi-token', variable: 'token')]) {
               def job = sh(returnStdout: true, script: 'curl https://upload.diawi.com/ -F token='+token+' -F file=@status/StatusIm.ipa -F find_by_udid=0 -F wall_of_apps=0 | jq -r ".job"').trim()
               sh 'sleep 10'
@@ -114,27 +115,25 @@ node ('master'){
     build job: 'status-react/status-nightly-publish-link', parameters: [[$class: 'StringParameterValue', name: 'APK_URL', value: apkUrl], [$class: 'StringParameterValue', name: 'IOS_URL', value: ipaUrl]]
   }
 
-  node('linux') {
-    stage('Build (Android) for e2e tests') {
-      sh 'cd android && mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/app-release.original.apk && ENVFILE=.env.e2e ./gradlew assembleRelease'
-    }
-
-    stage('Upload apk for e2e tests') {
-      withCredentials([string(credentialsId: 'SAUCE_ACCESS_KEY', variable: 'key'), string(credentialsId: 'SAUCE_USERNAME', variable: 'username')]){
-        apk_name = 'im.status.ethereum-e2e-' + shortCommit + '.apk'
-        sh('curl -u ' + username+ ':' + key + ' -X POST -H "Content-Type: application/octet-stream" https://saucelabs.com/rest/v1/storage/' + username + '/' + apk_name + '?overwrite=true --data-binary @android/app/build/outputs/apk/release/app-release.apk')
-      }
-      withCredentials([string(credentialsId: 'diawi-token', variable: 'token')]) {
-        def job = sh(returnStdout: true, script: 'curl https://upload.diawi.com/ -F token='+token+' -F file=@android/app/build/outputs/apk/release/app-release.apk -F find_by_udid=0 -F wall_of_apps=0 | jq -r ".job"').trim()
-        sh 'sleep 10'
-        def hash = sh(returnStdout: true, script: "curl -vvv 'https://upload.diawi.com/status?token="+token+"&job="+job+"'|jq -r '.hash'").trim()
-        testApkUrl = 'https://i.diawi.com/' + hash
-
-        sh ('echo ARTIFACT Android for e2e tests: ' + testApkUrl)
-      }
-    }
+  stage('Build (Android) for e2e tests') {
+    sh 'cd android && mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/app-release.original.apk && ENVFILE=.env.e2e ./gradlew assembleRelease'
   }
 
+  stage('Upload apk for e2e tests') {
+    withCredentials([string(credentialsId: 'SAUCE_ACCESS_KEY', variable: 'key'), string(credentialsId: 'SAUCE_USERNAME', variable: 'username')]){
+      apk_name = 'im.status.ethereum-e2e-' + shortCommit + '.apk'
+      sh('curl -u ' + username+ ':' + key + ' -X POST -H "Content-Type: application/octet-stream" https://saucelabs.com/rest/v1/storage/' + username + '/' + apk_name + '?overwrite=true --data-binary @android/app/build/outputs/apk/release/app-release.apk')
+    }
+    withCredentials([string(credentialsId: 'diawi-token', variable: 'token')]) {
+      def job = sh(returnStdout: true, script: 'curl https://upload.diawi.com/ -F token='+token+' -F file=@android/app/build/outputs/apk/release/app-release.apk -F find_by_udid=0 -F wall_of_apps=0 | jq -r ".job"').trim()
+      sh 'sleep 10'
+      def hash = sh(returnStdout: true, script: "curl -vvv 'https://upload.diawi.com/status?token="+token+"&job="+job+"'|jq -r '.hash'").trim()
+      testApkUrl = 'https://i.diawi.com/' + hash
+
+      sh ('echo ARTIFACT Android for e2e tests: ' + testApkUrl)
+    }
+  }
+  
   stage('Slack Notification') {
     def c = (testPassed ? 'good' : 'warning' )
     slackSend color: c, message: 'Nightly build (develop) \nTests: ' + (testPassed ? ':+1:' : ':-1:') + ')\nAndroid: ' + apkUrl + '\n iOS: ' + ipaUrl + '\n Android for e2e: ' + testApkUrl
