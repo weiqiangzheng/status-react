@@ -53,7 +53,7 @@ node ('master'){
     }
 
     parallel (
-      phase2: {
+      phase1: {
         node('macos') {
           stage('Build (iOS)') {
             withCredentials([string(credentialsId: 'jenkins_pass', variable: 'password')]) {
@@ -79,9 +79,9 @@ node ('master'){
             }
           }
         }
-      }
+      },
 
-      phase1: {
+      phase2: {
         node('linux') {
           stage('Build (Android)') {
             sh 'cd android && ./gradlew assembleRelease'
