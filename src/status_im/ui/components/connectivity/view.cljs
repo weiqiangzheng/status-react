@@ -39,6 +39,7 @@
             [react/animated-view {:style (styles/text-wrapper top offline-opacity window-width pending?)}
              [react/view
               [react/text {:style    styles/text
-                           :on-press (when @connection-problem?
-                                       #(re-frame/dispatch [:inbox/reconnect]))}
+                           ;;:on-press (when @connection-problem?
+                           ;;#(re-frame/dispatch [:inbox/reconnect]))
+}
                (i18n/label label)]]])))})))

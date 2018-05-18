@@ -38,9 +38,12 @@
              :wallet.transactions         constants/default-wallet-transactions
              :wallet-selected-asset       {}
              :prices                      {}
+             :peers-count                 0
+             :peers-summary               []
              :notifications               {}
              :network                     constants/default-network
              :networks/networks           constants/default-networks
+             :inbox/topics                #{}
              :inbox/wnodes                constants/default-wnodes
              :inbox/password              constants/inbox-password
              :my-profile/editing?         false
@@ -70,7 +73,7 @@
 (spec/def ::network-status (spec/nilable keyword?))
 
 (spec/def ::mailserver-status (spec/nilable keyword?))
-(spec/def ::peers-count (spec/nilable integer?))
+(spec/def :inbox/topics set?)
 
 ;;;;NODE
 
@@ -125,6 +128,8 @@
 ;;;;NETWORK
 
 (spec/def ::network (spec/nilable string?))
+(spec/def ::peers-count (spec/nilable integer?))
+(spec/def ::peers-summary (spec/nilable vector?))
 
 ;;;;NODE
 
@@ -170,6 +175,7 @@
                  :node/after-start
                  :node/after-stop
                  :inbox/wnodes
+                 :inbox/topics
                  :inbox/password
                  :inbox/sym-key-id
                  :inbox/last-request
@@ -197,6 +203,7 @@
                  ::network-status
                  ::mailserver-status
                  ::peers-count
+                 ::peers-summary
                  ::sync-listening-started
                  ::sync-state
                  ::sync-data
