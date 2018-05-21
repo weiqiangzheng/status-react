@@ -129,6 +129,9 @@ class SingleDeviceTestCase(AbstractTestCase):
         }
 
     def start_driver(self, rerun_count):
+        """ Create driver and start the app.
+        Try again if there was an infrastructure error.
+        """
         for i in range(rerun_count):
             try:
                 driver = webdriver.Remote(self.capabilities[self.environment]['executor'],
@@ -193,6 +196,7 @@ class SauceMultipleDeviceTestCase(AbstractTestCase):
             capabilities = self.capabilities_sauce_lab
         self.drivers = self.loop.run_until_complete(self.create_drivers_in_threads(quantity, webdriver.Remote,
                                                                                    self.drivers,
+                                                                                   get_run_count(),
                                                                                    self.executor_sauce_lab,
                                                                                    capabilities))
         for driver in range(quantity):
@@ -209,13 +213,23 @@ class SauceMultipleDeviceTestCase(AbstractTestCase):
                 pass
 
     @asyncio.coroutine
-    def create_drivers_in_threads(self, quantity: int, func: type, returns: dict, *args):
+    def create_drivers_in_threads(self, quantity: int, func: type, returns: dict, rerun_count: int, *args):
+        """ Create drivers in parallel.
+        Try again if there was an infrastructure error.
+        """
         loop = asyncio.get_event_loop()
-        for i in range(quantity):
-            returns[i] = loop.run_in_executor(None, func, *args)
-        for k in returns:
-            returns[k] = yield from returns[k]
-        return returns
+        for i in range(rerun_count):
+            try:
+                for j in range(quantity):
+                    returns[j] = loop.run_in_executor(None, func, *args)
+                for k in returns:
+                    returns[k] = yield from returns[k]
+                return returns
+            except WebDriverException as exception:
+                if not is_infrastructure_error(exception.msg):
+                    raise exception
+                if i == (get_run_count() - 1):
+                    raise exception
 
     @classmethod
     def teardown_class(cls):
