@@ -31,7 +31,7 @@ class TestNetworkChats(MultipleDeviceTestCase):
     @pytest.mark.parametrize("network", network_combinations,
                              ids=[i[0] + ' & ' + i[1] for i in network_combinations])
     def test_one_to_one_chat_between(self, network):
-        self.create_drivers(2)
+        self.start_drivers(2)
         device_1, device_2 = SignInView(self.drivers[0]), SignInView(self.drivers[1])
         for sign_in in device_1, device_2:
             sign_in.create_user()

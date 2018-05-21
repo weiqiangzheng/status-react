@@ -14,7 +14,7 @@ class TestChatManagementMultiple(MultipleDeviceTestCase):
         self.senders['g_user'] = transaction_users['G_USER']
         self.senders['h_user'] = transaction_users['H_USER']
 
-        self.create_drivers(2)
+        self.start_drivers(2)
         device_1 = self.drivers[0]
         device_2 = self.drivers[1]
 

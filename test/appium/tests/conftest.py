@@ -52,8 +52,8 @@ def pytest_addoption(parser):
                      help='How many times tests should be re-run if failed')
 
 
-def get_rerun_count():
-    return int(pytest.config.getoption('rerun_count'))
+def get_run_count():
+    return 1 + int(pytest.config.getoption('rerun_count'))
 
 
 def is_master(config):
@@ -133,7 +133,7 @@ def pytest_runtest_setup(item):
 
 
 def pytest_runtest_protocol(item, nextitem):
-    for i in range(get_rerun_count()):
+    for i in range(get_run_count()):
         reports = runtestprotocol(item, nextitem=nextitem)
         for report in reports:
             if report.failed and should_rerun_test(report.longreprtext):

@@ -7,7 +7,7 @@ from views.sign_in_view import SignInView
 class TestMultipleDevices(MultipleDeviceTestCase):
 
     def test_group_chat_send_receive_messages_and_remove_user(self):
-        self.create_drivers(2)
+        self.start_drivers(2)
         device_1, device_2 = SignInView(self.drivers[0]),  SignInView(self.drivers[1])
         for sign_in in device_1, device_2:
             sign_in.create_user()

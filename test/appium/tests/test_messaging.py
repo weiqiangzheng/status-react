@@ -23,7 +23,7 @@ class TestMessages(MultipleDeviceTestCase):
     @marks.pr
     @marks.testrail_case_id(3390)
     def test_one_to_one_chat_messages(self):
-        self.create_drivers(2)
+        self.start_drivers(2)
         device_1, device_2 = SignInView(self.drivers[0]), SignInView(self.drivers[1])
         for sign_in in device_1, device_2:
             sign_in.create_user()
@@ -80,7 +80,7 @@ class TestMessages(MultipleDeviceTestCase):
     @marks.pr
     @marks.testrail_case_id(3391)
     def test_group_chat_messages_and_delete_chat(self):
-        self.create_drivers(3)
+        self.start_drivers(3)
 
         device_1, device_2, device_3 = \
             SignInView(self.drivers[0]), SignInView(self.drivers[1]), SignInView(self.drivers[2])
@@ -143,7 +143,7 @@ class TestMessages(MultipleDeviceTestCase):
     @marks.pr
     @marks.testrail_case_id(3392)
     def test_public_chat(self):
-        self.create_drivers(2)
+        self.start_drivers(2)
         device_1, device_2 = SignInView(self.drivers[0]), SignInView(self.drivers[1])
         users = []
         chat_name = ''.join(random.choice(string.ascii_lowercase) for _ in range(7))
@@ -188,7 +188,7 @@ class TestMessages(MultipleDeviceTestCase):
 
     @marks.testrail_case_id(3423)
     def test_username_and_profile_picture_in_chats(self):
-        self.create_drivers(2)
+        self.start_drivers(2)
         device_1, device_2 = SignInView(self.drivers[0]), SignInView(self.drivers[1])
         username_1, username_2 = device_1.create_user(), device_2.create_user()
         home_1, home_2 = device_1.get_home_view(), device_2.get_home_view()
@@ -229,7 +229,7 @@ class TestMessages(MultipleDeviceTestCase):
 
     @marks.testrail_case_id(3429)
     def test_copy_and_paste_messages(self):
-        self.create_drivers(1)
+        self.start_drivers(1)
         sign_in = SignInView(self.drivers[0])
         sign_in.create_user()
         home = sign_in.get_home_view()
@@ -269,7 +269,7 @@ class TestOfflineMessages(MultipleDeviceTestCase):
 
     @marks.testrail_case_id(3420)
     def test_offline_messaging_1_1_chat(self):
-        self.create_drivers(2)
+        self.start_drivers(2)
         device_1, device_2 = self.drivers[0], self.drivers[1]
         sign_in_1, sign_in_2 = SignInView(device_1), SignInView(device_2)
         username_1 = sign_in_1.create_user()
@@ -301,7 +301,7 @@ class TestOfflineMessages(MultipleDeviceTestCase):
 
     @marks.testrail_case_id(3430)
     def test_offline_messaging_group_chat(self):
-        self.create_drivers(2)
+        self.start_drivers(2)
         device_1, device_2 = self.drivers[0], self.drivers[1]
         sign_in_1, sign_in_2 = SignInView(device_1), SignInView(device_2)
         username_1 = sign_in_1.create_user()

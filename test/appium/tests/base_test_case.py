@@ -8,7 +8,9 @@ from os import environ
 from appium import webdriver
 from abc import ABCMeta, abstractmethod
 from selenium.common.exceptions import WebDriverException
-from tests import test_suite_data, start_threads, api_requests
+from tests import test_suite_data, api_requests
+from tests.conftest import get_run_count
+from support.test_rerun import is_infrastructure_error
 from views.base_view import BaseView
 
 
@@ -113,23 +115,36 @@ class AbstractTestCase:
 
 class SingleDeviceTestCase(AbstractTestCase):
 
-    def setup_method(self, method):
-        capabilities = {'local': {'executor': self.executor_local,
-                                  'capabilities': self.capabilities_local},
-                        'sauce': {'executor': self.executor_sauce_lab,
-                                  'capabilities': self.capabilities_sauce_lab}}
-        counter = 0
-        self.driver = None
-        while not self.driver and counter <= 3:
+    @property
+    def capabilities(self):
+        return {
+            'local': {
+                'executor': self.executor_local,
+                'capabilities': self.capabilities_local
+            },
+            'sauce': {
+                'executor': self.executor_sauce_lab,
+                'capabilities': self.capabilities_sauce_lab
+            }
+        }
+
+    def start_driver(self, rerun_count):
+        for i in range(rerun_count):
             try:
-                self.driver = webdriver.Remote(capabilities[self.environment]['executor'],
-                                               capabilities[self.environment]['capabilities'])
+                driver = webdriver.Remote(self.capabilities[self.environment]['executor'],
+                                          self.capabilities[self.environment]['capabilities'])
                 self.driver.implicitly_wait(self.implicitly_wait)
                 BaseView(self.driver).accept_agreements()
                 test_suite_data.current_test.testruns[-1].jobs.append(self.driver.session_id)
-                break
-            except WebDriverException:
-                counter += 1
+                return driver
+            except WebDriverException as exception:
+                if not is_infrastructure_error(exception.msg):
+                    raise exception
+                if i == (get_run_count() - 1):
+                    raise exception
+
+    def setup_method(self, method):
+        self.driver = self.start_driver(rerun_count=get_run_count())
 
     def teardown_method(self, method):
         if self.environment == 'sauce':
@@ -145,7 +160,7 @@ class LocalMultipleDeviceTestCase(AbstractTestCase):
     def setup_method(self, method):
         self.drivers = dict()
 
-    def create_drivers(self, quantity):
+    def start_drivers(self, quantity):
         capabilities = self.add_local_devices_to_capabilities()
         for driver in range(quantity):
             self.drivers[driver] = webdriver.Remote(self.executor_local, capabilities[driver])
@@ -171,15 +186,15 @@ class SauceMultipleDeviceTestCase(AbstractTestCase):
     def setup_method(self, method):
         self.drivers = dict()
 
-    def create_drivers(self, quantity=2):
+    def start_drivers(self, quantity=2):
         if self.__class__.__name__ == 'TestOfflineMessages':
             capabilities = self.update_capabilities_sauce_lab('platformVersion', '6.0')
         else:
             capabilities = self.capabilities_sauce_lab
-        self.drivers = self.loop.run_until_complete(start_threads(quantity, webdriver.Remote,
-                                                    self.drivers,
-                                                    self.executor_sauce_lab,
-                                                    capabilities))
+        self.drivers = self.loop.run_until_complete(self.create_drivers_in_threads(quantity, webdriver.Remote,
+                                                                                   self.drivers,
+                                                                                   self.executor_sauce_lab,
+                                                                                   capabilities))
         for driver in range(quantity):
             self.drivers[driver].implicitly_wait(self.implicitly_wait)
             BaseView(self.drivers[driver]).accept_agreements()
@@ -192,6 +207,15 @@ class SauceMultipleDeviceTestCase(AbstractTestCase):
                 self.drivers[driver].quit()
             except (WebDriverException, AttributeError):
                 pass
+
+    @asyncio.coroutine
+    def create_drivers_in_threads(self, quantity: int, func: type, returns: dict, *args):
+        loop = asyncio.get_event_loop()
+        for i in range(quantity):
+            returns[i] = loop.run_in_executor(None, func, *args)
+        for k in returns:
+            returns[k] = yield from returns[k]
+        return returns
 
     @classmethod
     def teardown_class(cls):
