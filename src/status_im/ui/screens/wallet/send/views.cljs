@@ -221,10 +221,15 @@
         [components/amount-selector {:disabled?     modal?
                                      :error         (or amount-error
                                                         (when-not sufficient-funds? (i18n/label :t/wallet-insufficient-funds)))
-                                     :input-options {:default-value  (str (money/to-fixed (money/wei->ether amount)))
-                                                     :max-length     21
-                                                     :on-focus       (fn [] (when (and scroll @scroll) (utils/set-timeout #(.scrollToEnd @scroll) 100)))
-                                                     :on-change-text (update-amount-fn timeout)}}]
+                                     ;; While a user is typing something like "0.00000..." it is a very bad idea to replace it with just "0"
+                                     ;; we might break his intent. Also that keeps the text-input from interfering when a user tries to
+                                     ;; fix his typo.
+                                     :input-options (merge
+                                                     (if (pos? amount)
+                                                       {:default-value  (str (money/to-fixed (money/wei->ether amount)))})
+                                                     {:max-length     21
+                                                      :on-focus       (fn [] (when (and scroll @scroll) (utils/set-timeout #(.scrollToEnd @scroll) 100)))
+                                                      :on-change-text (update-amount-fn timeout)})}]
         [advanced-options advanced? transaction modal? scroll]]]
       (if signing?
         [signing-buttons
