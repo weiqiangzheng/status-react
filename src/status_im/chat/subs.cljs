@@ -401,3 +401,16 @@
  :<- [:get-active-chats]
  (fn [chats _]
    (apply + (map (comp count :unviewed-messages) (vals chats)))))
+
+(reg-sub
+ :chat/cooldown-enabled?
+ (fn [db]
+   (:chat/cooldown-enabled? db)))
+
+(reg-sub
+ :chat-cooldown-enabled?
+ :<- [:get-current-chat]
+ :<- [:chat/cooldown-enabled?]
+ (fn [[{:keys [public?]} cooldown-enabled?]]
+   (and public?
+        cooldown-enabled?)))
