@@ -26,6 +26,9 @@ timeout(90) {
       try {
 
         stage('Git & Dependencies') {
+
+          sh 'echo ${BUILD_NUMBER}'
+
           slackSend color: 'good', message: BRANCH_NAME + '(' + env.CHANGE_BRANCH + ') build started. ' + env.BUILD_URL
 
           checkout scm
