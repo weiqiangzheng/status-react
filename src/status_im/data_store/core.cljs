@@ -2,6 +2,7 @@
   (:require [cljs.core.async :as async]
             [re-frame.core :as re-frame]
             [status-im.data-store.realm.core :as data-source]
+            [status-im.utils.utils :as utils]
             status-im.data-store.chats
             status-im.data-store.messages
             status-im.data-store.contacts
@@ -13,8 +14,11 @@
             status-im.data-store.requests))
 
 (defn init [encryption-key]
+  (utils/show-popup "DEBUG MESSAGE" (str "init datastore with encryption key" encryption-key))
   (when-not @data-source/base-realm
-    (data-source/open-base-realm encryption-key))
+    (do
+      (utils/show-popup "DEBUG MESSAGE" (str "opening realm with encryption key" encryption-key))
+      (data-source/open-base-realm encryption-key)))
   (data-source/reset-account-realm encryption-key))
 
 (defn change-account [address new-account? encryption-key handler]
