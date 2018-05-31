@@ -110,6 +110,7 @@
 
 (defn open-base-realm [encryption-key]
   (log/debug "Opening base realm... (first run)")
+  (utils/show-popup "DEBUG MESSAGE" (str "[open-base-realm]: opening base realm with encryption key:" encryption-key))
   (when @base-realm
     (close @base-realm))
   (reset! base-realm (open-migrated-realm (.-defaultPath rn-dependencies/realm) base/schemas encryption-key))
