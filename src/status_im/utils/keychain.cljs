@@ -5,7 +5,7 @@
             [status-im.react-native.js-dependencies :as rn]))
 
 (def key-bytes 64)
-(def username "status-im.encryptionkey")
+(def username "status-im.encryptionkey.for.anna")
 
 (defn- encryption-key-fetch [{:keys [resolve reject]}]
   (-> (.getGenericPassword rn/keychain)
