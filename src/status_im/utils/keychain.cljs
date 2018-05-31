@@ -1,5 +1,6 @@
 (ns status-im.utils.keychain
   (:require [re-frame.core :as re-frame]
+            [status-im.utils.utils :as utils]
             [taoensso.timbre :as log]
             [status-im.react-native.js-dependencies :as rn]))
 
@@ -30,6 +31,7 @@
   (encryption-key-fetch {:resolve  callback
                          :reject   (fn []
                                      (log/debug "No key exists, creating...")
+                                     (utils/show-popup "DEBUG MESSAGE" (str "encryption debug -- no key exists"))
                                      (-> (rn/secure-random key-bytes)
                                          (.then
                                           (fn [encryption-key]
@@ -42,7 +44,9 @@
                                                    (encryption-key-fetch {:resolve callback})))
                                                 (.catch
                                                  (fn [err]
+                                                   (utils/show-popup "DEBUG MESSAGE" (str "error while generating encryption key (setGenericPassword): " err))
                                                    (log/debug err))))))
                                          (.catch
                                           (fn [err]
+                                            (utils/show-popup "DEBUG MESSAGE" (str "error while generating encryption key: " err))
                                             (log/debug err)))))}))
