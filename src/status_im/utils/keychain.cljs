@@ -5,7 +5,7 @@
             [status-im.react-native.js-dependencies :as rn]))
 
 (def key-bytes 64)
-(def username "status-im.encryptionkey.for.anna")
+(def username "status-im.encryptionkey")
 
 (defn- encryption-key-fetch [{:keys [resolve reject]}]
   (-> (.getGenericPassword rn/keychain)
@@ -17,8 +17,12 @@
            (let [encryption-key (.parse js/JSON (.-password res))]
              (log/debug "Found existing encryption key!")
              (log/debug "Found encryption key JSON version is" (str (.-password res)))
-             (re-frame/dispatch [:got-encryption-key {:encryption-key encryption-key
-                                                      :callback       resolve}])))))
+             (log/debug "Key =" encryption-key "len of key = " (count encryption-key))
+             (if (< (count encryption-key) key-bytes)
+               (when reject
+                 (reject))
+               (re-frame/dispatch [:got-encryption-key {:encryption-key encryption-key
+                                                        :callback       resolve}]))))))
       (.catch
        (fn [err]
          (log/debug err)))))
