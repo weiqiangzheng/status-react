@@ -5,6 +5,7 @@
             [clojure.string :as string]
             [status-im.chat.styles.message.message :as message.style]
             [status-im.utils.gfycat.core :as gfycat.core]
+            [taoensso.timbre :as log]
             [status-im.utils.gfycat.core :as gfycat]
             [status-im.constants :as constants]
             [status-im.utils.identicon :as identicon]
@@ -89,6 +90,7 @@
          :reagent-render
          (fn []
            ^{:key (str "message" message-id)}
+           (log/debug "render-fn:" text)
            [react/view {:style {:flex-direction :row :flex 1 :margin-vertical 12}}
             (if outgoing
               [my-photo from]
@@ -113,6 +115,7 @@
               (js/setTimeout #(when scroll-ref (.scrollToEnd @scroll-ref)) 400))
           messages (re-frame/subscribe [:get-current-chat-messages])
           current-public-key (re-frame/subscribe [:get-current-public-key])]
+      (log/debug "messages:" (map (juxt :message-id :content) @messages))
       [react/view {:style {:flex 1 :background-color :white :margin-horizontal 16}}
        [react/scroll-view {:scrollEventThrottle    16
                            :on-scroll              (fn [e]
@@ -128,7 +131,7 @@
         [react/view {:style {:padding-vertical 60}}
          (doall
            (for [[index {:keys [from content message-id] :as message-obj}] (map-indexed vector (reverse @messages))]
-             ^{:key message-id}
+             ^{:key (or message-id "0")}
              [message content (= from @current-public-key) (assoc message-obj :group-chat group-chat)]))]]])))
 
 (views/defview chat-text-input []
