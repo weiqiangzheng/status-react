@@ -16,6 +16,7 @@
              (reject))
            (let [encryption-key (.parse js/JSON (.-password res))]
              (log/debug "Found existing encryption key!")
+             (log/debug "Found encryption key JSON version is" (str (.-password res)))
              (re-frame/dispatch [:got-encryption-key {:encryption-key encryption-key
                                                       :callback       resolve}])))))
       (.catch
@@ -31,7 +32,6 @@
   (encryption-key-fetch {:resolve  callback
                          :reject   (fn []
                                      (log/debug "No key exists, creating...")
-                                     (utils/show-popup "DEBUG MESSAGE" (str "encryption debug -- no key exists"))
                                      (-> (rn/secure-random key-bytes)
                                          (.then
                                           (fn [encryption-key]
@@ -44,9 +44,7 @@
                                                    (encryption-key-fetch {:resolve callback})))
                                                 (.catch
                                                  (fn [err]
-                                                   (utils/show-popup "DEBUG MESSAGE" (str "error while generating encryption key (setGenericPassword): " err))
                                                    (log/debug err))))))
                                          (.catch
                                           (fn [err]
-                                            (utils/show-popup "DEBUG MESSAGE" (str "error while generating encryption key: " err))
                                             (log/debug err)))))}))

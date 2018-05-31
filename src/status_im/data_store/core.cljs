@@ -14,11 +14,8 @@
             status-im.data-store.requests))
 
 (defn init [encryption-key]
-  (utils/show-popup "DEBUG MESSAGE" (str "init datastore with encryption key:" encryption-key "base realm:" @data-source/base-realm))
   (when-not @data-source/base-realm
-    (do
-      (utils/show-popup "DEBUG MESSAGE" (str "[init]: opening realm with encryption key" encryption-key))
-      (data-source/open-base-realm encryption-key)))
+      (data-source/open-base-realm encryption-key))
   (data-source/reset-account-realm encryption-key))
 
 (defn change-account [address new-account? encryption-key handler]
