@@ -1,6 +1,8 @@
 (ns status-im.ui.screens.views
-  (:require-macros [status-im.utils.views :refer [defview letsubs] :as views])
+  (:require-macros [status-im.utils.slurp :refer [slurp]]
+                   [status-im.utils.views :refer [defview letsubs] :as views])
   (:require [re-frame.core :refer [dispatch]]
+            [pluto.reader :as pluto]
             [status-im.utils.platform :refer [android?]]
             [status-im.ui.components.react :refer [view modal create-main-screen-view] :as react]
             [status-im.ui.components.styles :as common-styles]
@@ -115,11 +117,22 @@
           [react/main-screen-modal-view modal-view
            [component]])]])))
 
+(def components
+  {'view react/view
+   'text react/text})
+
 (defview main []
   (letsubs [signed-up? [:signed-up?]
             view-id    [:get :view-id]]
     {:component-will-update (fn [] (react/dismiss-keyboard!))}
     (when view-id
+      (let [ext (slurp "resources/extension.edn")
+            {:keys [data]} (pluto/read ext)]
+        (get-in (pluto/parse {:components       components
+                              :valid-extensions #{:extension/meta}
+                              :valid-hooks      #{:hooks/main}} data)
+                [:data :views/main]))
+      #_
       (let [component        (get-main-component view-id)
             main-screen-view (create-main-screen-view view-id)]
         [main-screen-view common-styles/flex
