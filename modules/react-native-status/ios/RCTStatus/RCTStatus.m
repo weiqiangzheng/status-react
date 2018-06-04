@@ -62,6 +62,19 @@ static RCTBridge *bridge;
 
 RCT_EXPORT_MODULE();
 
+#pragma mark - Secure Enclave Functions
+
+RCT_EXPORT_METHOD(tryRelogin:(RCTResponseSenderBlock)callback) {
+    NSLog(@"tryReloginWithCallback");
+    // TASK: what we need to do there for real?
+    // if there is a key in Secure Enclave and an encypted password in the keychain, we use
+    // that key to decrypt the key.
+    // TASK: support timing out of the keys
+
+    // TASK: implement Android version as stuff
+    callback(@[NSNull.null]);
+}
+
 ////////////////////////////////////////////////////////////////////
 #pragma mark - Jails functions
 //////////////////////////////////////////////////////////////////// initJail

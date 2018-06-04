@@ -238,6 +238,11 @@
 (defn app-state-change [state]
   (.appStateChange status state))
 
+(defn try-relogin [callback]
+  (call-module #(.tryRelogin
+                 status
+                 callback)))
+
 (defn get-device-UUID [callback]
   (call-module
    #(.getDeviceUUID

@@ -24,5 +24,6 @@
   (-close-application [this])
   (-connection-change [this data])
   (-app-state-change [this state])
+  (-try-relogin [this callback])
   (-get-device-UUID [this callback]))
 

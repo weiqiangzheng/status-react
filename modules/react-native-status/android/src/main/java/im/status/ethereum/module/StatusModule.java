@@ -459,6 +459,13 @@ class StatusModule extends ReactContextBaseJavaModule implements LifecycleEventL
     }
 
     @ReactMethod
+    public void tryRelogin(final Callback callback) {
+        Log.d(TAG, "notifyUsers");
+        // Not implemented for Android (yet).
+        callback.invoke(false);
+    }
+
+    @ReactMethod
     public void addPeer(final String enode, final Callback callback) {
         Log.d(TAG, "addPeer");
         if (!checkAvailability()) {
