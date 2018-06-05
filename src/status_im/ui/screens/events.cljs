@@ -161,6 +161,7 @@
  :initialize-geth-fx
  (fn [config]
     ;;TODO get rid of this, because we don't need this anymore
+   (status/try-relogin #(log/debug "igorm - tryRelogin ->" %))
    (status/should-move-to-internal-storage?
     (fn [should-move?]
       (if should-move?

@@ -301,5 +301,7 @@
     (connection-change data))
   (-app-state-change [this state]
     (app-state-change state))
+  (-try-relogin [this callback]
+    (try-relogin callback))
   (-get-device-UUID [this callback]
     (get-device-UUID callback)))
