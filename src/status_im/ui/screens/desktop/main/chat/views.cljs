@@ -5,6 +5,7 @@
             [clojure.string :as string]
             [status-im.chat.styles.message.message :as message.style]
             [status-im.utils.gfycat.core :as gfycat.core]
+            [taoensso.timbre :as log]
             [status-im.utils.gfycat.core :as gfycat]
             [status-im.constants :as constants]
             [status-im.utils.identicon :as identicon]
@@ -28,7 +29,10 @@
         (when (and group-chat (not public?))
           [icons/icon :icons/group-chat])
         [react/text {:style {:font-size 16 :color :black :font-weight "600"}}
-         chat-name]]
+         chat-name]
+        [react/touchable-highlight
+         {:on-press #(re-frame/dispatch [:remove-chat-and-navigate-home chat-id])}
+         [icons/icon :icons/delete]]]
        (when pending?
          [react/touchable-highlight
           {:on-press #(re-frame/dispatch [:add-pending-contact chat-id])}
@@ -128,7 +132,7 @@
         [react/view {:style {:padding-vertical 60}}
          (doall
            (for [[index {:keys [from content message-id] :as message-obj}] (map-indexed vector (reverse @messages))]
-             ^{:key (str message index)}
+             ^{:key (str message-id index)}
              [message content (= from @current-public-key) (assoc message-obj :group-chat group-chat)]))]]])))
 
 (views/defview chat-text-input []
