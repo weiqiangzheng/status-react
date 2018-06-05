@@ -73,6 +73,9 @@
 (defn should-move-to-internal-storage? [callback]
   (module-interface/-should-move-to-internal-storage? rns-module callback))
 
+(defn try-relogin [callback]
+  (module-interface/-try-relogin rns-module callback))
+
 (defn notify-users [{:keys [message payload tokens] :as m} callback]
   (module-interface/-notify-users rns-module m callback))
 
@@ -87,9 +90,6 @@
 
 (defn app-state-change [state]
   (module-interface/-app-state-change rns-module state))
-
-(defn try-relogin [callback]
-  (module-interface/-try-relogin rns-module callback))
 
 (defn get-device-UUID [callback]
   (module-interface/-get-device-UUID rns-module callback))
