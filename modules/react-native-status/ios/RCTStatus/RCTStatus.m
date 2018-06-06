@@ -4,6 +4,14 @@
 #import "React/RCTEventDispatcher.h"
 #import <Statusgo/Statusgo.h>
 
+@interface StatusCredentials
+@property (nonatomic, copy) NSString *username;
+@property (nonatomic, copy) NSString *password;
+@end
+
+@implementation StatusCredentials
+@end
+
 @interface NSDictionary (BVJSONString)
 -(NSString*) bv_jsonStringWithPrettyPrint:(BOOL) prettyPrint;
 @end
@@ -60,19 +68,36 @@ static RCTBridge *bridge;
     bridge = newBridge;
 }
 
-RCT_EXPORT_MODULE();
-
-#pragma mark - Secure Enclave Functions
-
-RCT_EXPORT_METHOD(tryRelogin:(RCTResponseSenderBlock)callback) {
-    NSLog(@"tryReloginWithCallback");
+-(StatusCredentials *)restoreSavedCredentials {
     // TASK: what we need to do there for real?
     // if there is a key in Secure Enclave and an encypted password in the keychain, we use
     // that key to decrypt the key.
     // TASK: support timing out of the keys
 
-    // TASK: implement Android version as stuff
-    callback(@[NSNull.null]);
+    StatusCredentials *creds = [StatusCredentials new];
+    creds.username = @"<fake username>";
+    creds.password = @"<fake password>";
+
+    return creds;
+}
+
+RCT_EXPORT_MODULE();
+
+#pragma mark - Secure Enclave Functions
+
+RCT_EXPORT_METHOD(tryRelogin:(RCTResponseSenderBlock)callback) {
+    // TASK: implement Android version
+
+    NSLog(@"tryRelogin");
+    StatusCredentials *credentials = [self restoreSavedCredentials];
+    if (!credentials) {
+        callback(@[NSNull.null]);
+        return;
+    }
+
+    NSLog(@"tryRelogin - found credentials, trying to sign-in");
+
+    [self login:credentials.username password:credentials.password callback:callback];
 }
 
 ////////////////////////////////////////////////////////////////////
