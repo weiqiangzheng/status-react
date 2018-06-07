@@ -79,10 +79,12 @@
     (call-module #(.moveToInternalStorage status on-result))))
 
 (defn stop-node []
+  (log/debug "igorm - stop-node-called")
   (when status
     (call-module #(.stopNode status))))
 
 (defn start-node [config]
+  (log/debug "igorm - start-node-called. config ->" config)
   (when status
     (call-module #(.startNode status config))))
 
