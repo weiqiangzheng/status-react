@@ -27,6 +27,7 @@
   {:align-items      :flex-start
    :flex-direction   :row
    :flex-grow        1
+   :min-height       min-input-height
    :max-height       max-input-height})
 
 (defnstyle input-view [single-line-input?]
@@ -36,6 +37,7 @@
    :padding-top    9
    :padding-bottom 5
    :padding-right  12
+   :min-height     min-input-height
    :max-height     (if single-line-input?
                      min-input-height
                      max-input-height)
