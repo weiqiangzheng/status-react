@@ -48,15 +48,9 @@
    password
    #(re-frame/dispatch [::account-created (json->clj %) password]))))
 
-;;;; Handlers
+;;; STUFF
 
-(register-handler-fx
- ::create-account
- (fn [{db :db} [_ password]]
-   (log/debug "igorm → ::create-account thingy")
-   (wrap-with-create-account-fx
-    (assoc db :node/after-start nil) 
-    password)))
+;;;; Wrappers
 
 (defn wrap-with-create-account-fx [db password]
   (log/debug "igorm → ::wrap-with-create-account blah")
@@ -71,18 +65,28 @@
      :db                 (assoc db :network network
                                 :node/after-start [::create-account password])}))
 
-(re-frame/register-handler-fx
+(defn wrap-with-restart-node-fx [db password]
+  (log/debug "igorm → wrap with restart node fx")
+  {:db         (assoc db :node/after-stop [::start-node password])
+   ::stop-node nil})
+
+;;;; Handlers
+
+(handlers/register-handler-fx
+ ::create-account
+ (fn [{db :db} [_ password]]
+   (log/debug "igorm → ::create-account thingy")
+   (wrap-with-create-account-fx
+    (assoc db :node/after-start nil) 
+    password)))
+
+(handlers/register-handler-fx
  ::start-node
  (fn [{db :db} [_ password]]
    (log/debug "igorm → ::start-node-fx")
    (wrap-with-initialize-geth-fx
     (assoc db :node/after-stop nil)
     password)))
-
-(defn wrap-with-restart-node-fx [db password]
-  (log/debug "igorm → wrap with restart node fx")
-  {:db         (assoc db :node/after-stop [::start-node password])
-   ::stop-node nil})
 
 
 ;; - ENDOF copy-paste
