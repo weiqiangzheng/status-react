@@ -33,20 +33,19 @@
  (fn [coeffects _]
    (assoc coeffects :status (rand-nth statuses/data))))
 
-
 ;;;; FX
 
 (re-frame/reg-fx
-  ::stop-node
-  (fn [] (status/stop-node)))
+ ::stop-node
+ (fn [] (status/stop-node)))
 
 (re-frame/reg-fx
  ::create
  (fn [password]
-  (log/debug "igorm → ::create FX")
-  (status/create-account
-   password
-   #(re-frame/dispatch [::account-created (json->clj %) password]))))
+   (log/debug "igorm → ::create FX" "password" password)
+   (status/create-account
+    password
+    #(re-frame/dispatch [::account-created (json->clj %) password]))))
 
 ;;; STUFF
 
@@ -55,11 +54,12 @@
 (defn wrap-with-create-account-fx [db password]
   (log/debug "igorm → ::wrap-with-create-account blah")
   {:db     db
-   ::create [password]})
+   ::create password})
 
 (defn wrap-with-initialize-geth-fx [db password]
   ;; TASK ↓ what do do about that? where to get conf from
-  (let [{:keys [network config]} constants/default-network]
+  (let [network constants/default-network
+        config  (get-in constants/default-networks [network :config])]
     (log/debug "igorm → ::initialize-geth-fx net" network "conf" config)
     {:initialize-geth-fx config
      :db                 (assoc db :network network
@@ -77,7 +77,7 @@
  (fn [{db :db} [_ password]]
    (log/debug "igorm → ::create-account thingy")
    (wrap-with-create-account-fx
-    (assoc db :node/after-start nil) 
+    (assoc db :node/after-start nil)
     password)))
 
 (handlers/register-handler-fx
@@ -88,13 +88,10 @@
     (assoc db :node/after-stop nil)
     password)))
 
-
 ;; - ENDOF copy-paste
 
 (defn custom-network? [network default-networks]
-  true)
-
-  ;(not (contains? default-networks network)))
+  (not (contains? default-networks network)))
 
 (handlers/register-handler-fx
  :create-account
@@ -135,7 +132,7 @@
                              :signing-phrase signing-phrase
                              :mnemonic       mnemonic
                              :settings       (constants/default-account-settings)}]
-     (log/debug "account-created")
+     (log/debug "igorm->account-created" "norm-address" normalized-address "pass" password)
      (when-not (str/blank? pubkey)
        (-> (add-account db account)
            (assoc :dispatch [:login-account normalized-address password]))))))
