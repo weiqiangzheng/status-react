@@ -127,6 +127,8 @@
 
                       :else
                       wrap-with-stop-node-fx)]
+
+    (log/debug "igorm -> login-account is called!")
     (wrap-fn db' address password)))
 
 (register-handler-fx

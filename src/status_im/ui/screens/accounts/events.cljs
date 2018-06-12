@@ -33,22 +33,73 @@
  (fn [coeffects _]
    (assoc coeffects :status (rand-nth statuses/data))))
 
+
 ;;;; FX
 
 (re-frame/reg-fx
- ::create-account
+  ::stop-node
+  (fn [] (status/stop-node)))
+
+(re-frame/reg-fx
+ ::create
  (fn [password]
-   (status/create-account
-    password
-    #(re-frame/dispatch [::account-created (json->clj %) password]))))
+  (log/debug "igorm → ::create FX")
+  (status/create-account
+   password
+   #(re-frame/dispatch [::account-created (json->clj %) password]))))
 
 ;;;; Handlers
 
+(register-handler-fx
+ ::create-account
+ (fn [{db :db} [_ password]]
+   (log/debug "igorm → ::create-account thingy")
+   (wrap-with-create-account-fx
+    (assoc db :node/after-start nil) 
+    password)))
+
+(defn wrap-with-create-account-fx [db password]
+  (log/debug "igorm → ::wrap-with-create-account blah")
+  {:db     db
+   ::create [password]})
+
+(defn wrap-with-initialize-geth-fx [db password]
+  ;; TASK ↓ what do do about that? where to get conf from
+  (let [{:keys [network config]} constants/default-network]
+    (log/debug "igorm → ::initialize-geth-fx net" network "conf" config)
+    {:initialize-geth-fx config
+     :db                 (assoc db :network network
+                                :node/after-start [::create-account password])}))
+
+(re-frame/register-handler-fx
+ ::start-node
+ (fn [{db :db} [_ password]]
+   (log/debug "igorm → ::start-node-fx")
+   (wrap-with-initialize-geth-fx
+    (assoc db :node/after-stop nil)
+    password)))
+
+(defn wrap-with-restart-node-fx [db password]
+  (log/debug "igorm → wrap with restart node fx")
+  {:db         (assoc db :node/after-stop [::start-node password])
+   ::stop-node nil})
+
+
+;; - ENDOF copy-paste
+
+(defn custom-network? [network default-networks]
+  true)
+
+  ;(not (contains? default-networks network)))
+
 (handlers/register-handler-fx
  :create-account
- (fn [{{:accounts/keys [create] :as db} :db} _]
-   {:db              (update db :accounts/create assoc :step :account-creating :error nil)
-    ::create-account (:password create)}))
+ (fn [{{:keys [network] :networks/keys [default-networks] :accounts/keys [create] :as db} :db} _]
+   (let [db'     (update db :accounts/create assoc :step :account-creating :error nil)
+         wrap-fn (if (custom-network? network default-networks)
+                   wrap-with-restart-node-fx
+                   wrap-with-create-account-fx)]
+     (wrap-fn db' (:password create)))))
 
 (defn add-account
   "Takes db and new account, creates map of effects describing adding account to database and realm"
