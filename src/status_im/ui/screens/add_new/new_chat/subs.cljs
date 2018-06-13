@@ -7,4 +7,4 @@
   :<- [:get :contacts/new-identity]
   :<- [:get-current-account]
   (fn [[new-identity account]]
-   (db/validate-pub-key new-identity account)))
+    (db/validate-pub-key new-identity account)))
