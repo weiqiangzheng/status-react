@@ -90,7 +90,6 @@
          :reagent-render
          (fn []
            ^{:key (str "message" message-id)}
-           (log/debug "render-fn:" text)
            [react/view {:style {:flex-direction :row :flex 1 :margin-vertical 12}}
             (if outgoing
               [my-photo from]
@@ -115,7 +114,6 @@
               (js/setTimeout #(when scroll-ref (.scrollToEnd @scroll-ref)) 400))
           messages (re-frame/subscribe [:get-current-chat-messages])
           current-public-key (re-frame/subscribe [:get-current-public-key])]
-      (log/debug "messages:" (map (juxt :message-id :content) @messages))
       [react/view {:style {:flex 1 :background-color :white :margin-horizontal 16}}
        [react/scroll-view {:scrollEventThrottle    16
                            :on-scroll              (fn [e]
