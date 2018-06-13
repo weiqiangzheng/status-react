@@ -13,7 +13,8 @@
                   topic [:get :public-group-topic]
                   topic-error [:new-topic-error-message]
                   account [:get-current-account]]
-    [react/view {:style {:flex 1 :background-color :white :margin-left 24 :margin-right 37}}
+    [react/scroll-view
+     [react/view {:style {:flex 1 :background-color :white :margin-left 24 :margin-right 37}}
      ^{:key "newcontact"}
      [react/view {:style {:height 64 :align-items :flex-start :justify-content :center}}
       [react/text {:style {:font-size 20 :color :black :font-weight "600"}}
@@ -69,4 +70,4 @@
         [react/view {:style {:width 150 :height 45 :border-radius 8 :background-color (if topic-error "#eef2f5" "#4360df") :align-items :center
                              :justify-content :center}}
 
-         [react/text {:style {:font-size 16 :color (if topic-error "#939ba1" :white) }} "Join public chat"]]]]]]))
+         [react/text {:style {:font-size 16 :color (if topic-error "#939ba1" :white) }} "Join public chat"]]]]]]]))
