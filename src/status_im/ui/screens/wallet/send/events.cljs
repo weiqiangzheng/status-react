@@ -266,7 +266,7 @@
           (cond-> {:dispatch [:navigate-back]}
             (= method constants/web3-send-transaction)
             (assoc :dispatch-later [{:ms 400 :dispatch [:navigate-to-modal :wallet-transaction-sent-modal]}]))
-          {:dispatch [:navigate-to :wallet-transaction-sent]}))))))
+          {:dispatch [:navigation-replace :wallet-transaction-sent]}))))))
 
 (defn on-transactions-modal-completed [raw-results]
   (let [result (types/json->clj raw-results)]
