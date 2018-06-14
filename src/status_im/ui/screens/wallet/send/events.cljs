@@ -379,16 +379,8 @@
 
 (handlers/register-handler-fx
  :wallet.send/edit-value
- (fn [{:keys [db]} [_ key value]]
-   (let [bn-value (money/bignumber value)
-         invalid? (models.wallet/invalid-send-parameter? key bn-value)
-         data     (if-not invalid?
-                    {:value        value
-                     :value-number bn-value
-                     :invalid?     false}
-                    {:value    value
-                     :invalid? invalid?})]
-     {:db (update-in db [:wallet :edit key] merge data)})))
+ (fn [cofx [_ key value]]
+   (models.wallet/edit-value key value cofx)))
 
 (handlers/register-handler-fx
  :wallet.send/set-gas-details
@@ -404,11 +396,15 @@
 
 (handlers/register-handler-fx
  :wallet.send/reset-gas-default
- (fn [{:keys [db]}]
-   {:dispatch [:wallet/update-gas-price true]
-    :db       (assoc-in db [:wallet :edit :gas]
-                        {:value    (ethereum/estimate-gas (-> db :wallet :send-transaction :symbol))
-                         :invalid? false})}))
+ (fn [{:keys [db] :as cofx}]
+   (let [gas-estimate (money/to-fixed
+                       (ethereum/estimate-gas
+                        (-> db :wallet :send-transaction :symbol)))]
+     (assoc (models.wallet/edit-value
+             :gas
+             gas-estimate
+             cofx)
+            :dispatch [:wallet/update-gas-price true]))))
 
 (handlers/register-handler-fx
  :close-transaction-sent-screen

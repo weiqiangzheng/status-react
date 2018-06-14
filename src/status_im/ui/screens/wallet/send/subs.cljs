@@ -1,6 +1,7 @@
 (ns status-im.ui.screens.wallet.send.subs
   (:require [re-frame.core :as re-frame]
             [status-im.utils.money :as money]
+            [status-im.models.wallet :as models.wallet]
             [status-im.utils.hex :as utils.hex]))
 
 (re-frame/reg-sub ::send-transaction
@@ -54,9 +55,25 @@
                              {:gas       (or (:gas send-transaction) (:gas unsigned-transaction))
                               :gas-price (or (:gas-price send-transaction) (:gas-price unsigned-transaction))}))))
 
+(defn edit-or-transaction-data
+  "Set up edit data structure, defaulting to transaction when not available"
+  [transaction edit]
+  (cond-> edit
+    (not (get-in edit [:gas-price :value]))
+    (models.wallet/build-edit
+     :gas-price
+     (money/to-fixed (money/wei-> :gwei (:gas-price transaction))))
+
+    (not (get-in edit [:gas :value]))
+    (models.wallet/build-edit
+     :gas
+     (money/to-fixed (:gas transaction)))))
+
 (re-frame/reg-sub :wallet/edit
+                  :<- [::send-transaction]
                   :<- [:wallet]
-                  :edit)
+                  (fn [[transaction {:keys [edit]}]]
+                    (edit-or-transaction-data transaction edit)))
 
 (defn sign-enabled? [amount-error to amount]
   (and
@@ -67,9 +84,12 @@
 (re-frame/reg-sub :wallet.send/transaction
                   :<- [::send-transaction]
                   :<- [:balance]
-                  (fn [[{:keys [amount symbol] :as transaction} balance]]
-                    (assoc transaction :sufficient-funds? (or (nil? amount)
-                                                              (money/sufficient-funds? amount (get balance symbol))))))
+                  (fn [[{:keys [gas gas-price amount symbol] :as transaction} balance]]
+                    (-> transaction
+                        (assoc :max-fee (models.wallet/calculate-max-fee gas gas-price))
+                        (assoc :sufficient-funds?
+                               (or (nil? amount)
+                                   (money/sufficient-funds? amount (get balance symbol)))))))
 
 (re-frame/reg-sub :wallet.send/unsigned-transaction
                   :<- [::unsigned-transaction]
