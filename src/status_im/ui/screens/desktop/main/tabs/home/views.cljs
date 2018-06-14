@@ -2,6 +2,8 @@
   (:require-macros [status-im.utils.views :as views])
   (:require [re-frame.core :as re-frame]
             [status-im.utils.gfycat.core :as gfycat]
+            [status-im.ui.screens.home.views.inner-item :as chat-item]
+            [taoensso.timbre :as log]
             [status-im.ui.components.icons.vector-icons :as icons]
             [status-im.ui.components.react :as react]))
 
@@ -12,20 +14,36 @@
        [react/text {:font  :medium}
         @unviewed-messages-count]])))
 
-(views/defview chat-list-item-inner-view [{:keys [chat-id name group-chat public? public-key]}]
-  (let [name (str
-               (if public? "#" "")
-               (or name
-                   (gfycat/generate-gfy public-key)))]
-    [react/view {:style {:padding 12 :background-color :white :flex-direction :row :align-items :center}}
-     (when public?
-       [icons/icon :icons/public-chat])
-     (when (and group-chat (not public?))
-       [icons/icon :icons/group-chat])
-     [react/text
-      name]
-     [react/view {:style {:flex 1}}]
-     [unviewed-indicator chat-id]]))
+(views/defview chat-list-item-inner-view [{:keys [chat-id name group-chat public? public-key] :as chat-item}]
+  (letsubs [photo-path [:get-chat-photo chat-id]
+            current-chat-id [:get-current-chat-id]
+            last-message [:get-last-message chat-id]]
+    (let [name (str
+                 (if public? "#" "")
+                 (or name
+                     (gfycat/generate-gfy public-key)))]
+      ;(log/debug "chat-list-item:" chat-item)
+      ;(log/debug "last-message" last-message)
+      [react/view {:style {:font-size 14 :padding 12 :background-color (if (= current-chat-id chat-id) "#eef2f5" :white) :flex-direction :row :align-items :center}}
+       (when public?
+         [icons/icon :icons/public-chat])
+       (when (and group-chat (not public?))
+         [icons/icon :icons/group-chat])
+       [react/image {:style {:width 46 :height 46 :border-radius 46 :margin-right 16}
+                     :source {:uri photo-path}}]
+       [react/view #_{:style {:padding-right 26}}
+        [react/text {:style {:font-size 14
+                             :font-weight (if (= current-chat-id chat-id) 600 :normal)
+                             :ellipsizeMode :middle}} name]
+        [react/text {:style {:color "#939ba1"
+                             :font-size 14}
+                     :ellipsizeMode :tail
+                     :number-of-lines 1}
+         (:content last-message)]]
+       [react/view
+        [chat-item/message-timestamp last-message]]
+       [react/view {:style {:flex 1}}]
+       [unviewed-indicator chat-id]])))
 
 (defn chat-list-item [[chat-id chat]]
   [react/touchable-highlight {:on-press #(re-frame/dispatch [:navigate-to-chat chat-id])}
