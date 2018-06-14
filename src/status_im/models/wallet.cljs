@@ -26,6 +26,9 @@
         gas-price (get-in edit [:gas :value-number])]
     (assoc edit :max-fee (calculate-max-fee gas gas-price))))
 
+(defn add-max-fee [{:keys [gas gas-price] :as transaction}]
+  (assoc transaction :max-fee (calculate-max-fee gas gas-price)))
+
 (defn build-edit [edit-value key value]
   "Takes the previous edit, either :gas or :gas-price and a value as string.
   Wei for gas, and gwei for gas price.

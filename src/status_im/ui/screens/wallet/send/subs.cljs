@@ -71,9 +71,14 @@
 
 (re-frame/reg-sub :wallet/edit
                   :<- [::send-transaction]
+                  :<- [::unsigned-transaction]
                   :<- [:wallet]
-                  (fn [[transaction {:keys [edit]}]]
-                    (edit-or-transaction-data transaction edit)))
+                  (fn [[send-transaction unsigned-transaction {:keys [edit]}]]
+                    (edit-or-transaction-data
+                     (if (:id send-transaction)
+                       unsigned-transaction
+                       send-transaction)
+                     edit)))
 
 (defn sign-enabled? [amount-error to amount]
   (and
@@ -84,9 +89,9 @@
 (re-frame/reg-sub :wallet.send/transaction
                   :<- [::send-transaction]
                   :<- [:balance]
-                  (fn [[{:keys [gas gas-price amount symbol] :as transaction} balance]]
+                  (fn [[{:keys [amount symbol] :as transaction} balance]]
                     (-> transaction
-                        (assoc :max-fee (models.wallet/calculate-max-fee gas gas-price))
+                        (models.wallet/add-max-fee)
                         (assoc :sufficient-funds?
                                (or (nil? amount)
                                    (money/sufficient-funds? amount (get balance symbol)))))))
@@ -99,7 +104,7 @@
                     (when transaction
                       (let [contact           (contacts (utils.hex/normalize-hex to))
                             sufficient-funds? (money/sufficient-funds? value (get balance symbol))]
-                        (cond-> (assoc transaction
+                        (cond-> (assoc (models.wallet/add-max-fee transaction)
                                        :amount value
                                        :sufficient-funds? sufficient-funds?)
                           contact                 (assoc :to-name (:name contact)))))))
