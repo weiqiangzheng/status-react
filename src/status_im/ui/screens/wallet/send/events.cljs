@@ -14,6 +14,7 @@
             [status-im.utils.security :as security]
             [status-im.utils.types :as types]
             [status-im.utils.utils :as utils]
+            [status-im.models.wallet :as models.wallet]
             [status-im.constants :as constants]
             [status-im.transport.utils :as transport.utils]
             [taoensso.timbre :as log]))
@@ -380,10 +381,13 @@
  :wallet.send/edit-value
  (fn [{:keys [db]} [_ key value]]
    (let [bn-value (money/bignumber value)
-         data     (if bn-value
-                    {:value    bn-value
-                     :invalid? false}
-                    {:invalid? true})]
+         invalid? (models.wallet/invalid-send-parameter? key bn-value)
+         data     (if-not invalid?
+                    {:value        value
+                     :value-number bn-value
+                     :invalid?     false}
+                    {:value    value
+                     :invalid? invalid?})]
      {:db (update-in db [:wallet :edit key] merge data)})))
 
 (handlers/register-handler-fx
