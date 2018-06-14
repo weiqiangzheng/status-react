@@ -2,6 +2,7 @@
   (:require-macros [status-im.utils.views :as views])
   (:require [re-frame.core :as re-frame]
             [status-im.utils.gfycat.core :as gfycat]
+            [status-im.ui.screens.home.styles :as styles]
             [status-im.ui.screens.home.views.inner-item :as chat-item]
             [taoensso.timbre :as log]
             [status-im.ui.components.icons.vector-icons :as icons]
@@ -56,7 +57,13 @@
      [react/view {:style {:align-items :center :flex-direction :row :padding 11}}
       [react/view {:style {:flex 1}}]
       [react/touchable-highlight {:on-press #(re-frame/dispatch [:navigate-to :new-contact])}
-       [icons/icon :icons/add]]]
+       [react/view {:style {:background-color "#0000ff"
+                            :width 34
+                            :height 34
+                            :border-radius 34
+                            :justify-content :center
+                            :align-items :center}}
+        [icons/icon :icons/add {:style {:tint-color :white}}]]]]
      [react/view {:style {:height 1 :background-color "#e8ebec" :margin-horizontal 16}}]
      [react/scroll-view
       [react/view
