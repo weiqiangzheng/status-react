@@ -16,6 +16,8 @@
 (deftest valid-gas
   (testing "not an number"
     (is (= :invalid-number (model/invalid-send-parameter? :gas nil))))
+  (testing "0"
+    (is (= :invalid-number (model/invalid-send-parameter? :gas 0))))
   (testing "a number"
     (is (not (model/invalid-send-parameter? :gas 1)))))
 

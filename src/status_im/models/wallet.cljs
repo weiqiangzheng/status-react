@@ -11,7 +11,8 @@
     (< (money/->wei :gwei value) min-gas-price-wei) :not-enough-wei))
 
 (defmethod invalid-send-parameter? :default [_ value]
-  (when-not value
+  (when (or (not value)
+            (<= value 0))
     :invalid-number))
 
 (defn- calculate-max-fee
